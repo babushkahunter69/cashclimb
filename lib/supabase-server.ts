@@ -1,13 +1,16 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+// For server components — reads cookies for auth context
 export function createServerClient() {
-  return createServerComponentClient({ cookies })
+  const cookieStore = cookies()
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 }
 
-// Admin client with service role key — bypasses RLS for trusted server operations
-import { createClient } from '@supabase/supabase-js'
-
+// Admin client — bypasses RLS for trusted server operations
 export function createAdminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
