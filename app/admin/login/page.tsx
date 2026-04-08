@@ -12,24 +12,28 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
 
   async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      })
-      if (!res.ok) throw new Error('Invalid password')
-      toast.success('Welcome back!')
-      router.push(from)
-      router.refresh()
-    } catch {
-      toast.error('Invalid password. Try again.')
-    } finally {
-      setLoading(false)
-    }
+  e.preventDefault()
+  setLoading(true)
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    if (!res.ok) throw new Error('Invalid password')
+
+    // Save to sessionStorage so API calls can read it
+    sessionStorage.setItem('cc-admin-key', password)
+
+    toast.success('Welcome back!')
+    router.push(from)
+    router.refresh()
+  } catch {
+    toast.error('Invalid password. Try again.')
+  } finally {
+    setLoading(false)
   }
+}
 
   return (
     <div className="w-full max-w-sm">

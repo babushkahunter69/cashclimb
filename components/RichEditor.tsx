@@ -27,11 +27,12 @@ const ToolbarBtn = ({
 
 export default function RichEditor({ value, onChange }: Props) {
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Image.configure({ inline: false }),
-      Link.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: 'Write your article here...' }),
+  immediatelyRender: false,   // ← add this line
+  extensions: [
+    StarterKit,
+    Image.configure({ inline: false }),
+    Link.configure({ openOnClick: false }),
+    Placeholder.configure({ placeholder: 'Write your article here...' }),
     ],
     content: value,
     onUpdate({ editor }) {
