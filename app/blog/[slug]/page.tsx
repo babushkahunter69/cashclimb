@@ -112,11 +112,15 @@ export default async function PostPage({ params }: Props) {
         )}
 
         {/* Article body */}
-        <div className="max-w-3xl mx-auto px-6 py-10">
-          <div
-            className="prose-cashclimb"
-            dangerouslySetInnerHTML={{ __html: post.body }}
-          />
+        <div
+  className="prose-cashclimb"
+  dangerouslySetInnerHTML={{
+    __html: post.body
+      .replace(/rel="noopener noreferrer nofollow"/g, '')
+      .replace(/rel="nofollow"/g, '')
+      .replace(/rel="noreferrer nofollow"/g, '')
+  }}
+/>
 
           {/* Disclaimer */}
           <div className="mt-12 p-5 bg-bg-2 border border-border rounded-xl">
