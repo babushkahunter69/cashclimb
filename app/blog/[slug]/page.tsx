@@ -71,6 +71,32 @@ function formatDate(date: string) {
   })
 }
 
+function getAuthorProfile(author?: string) {
+  const normalized = (author || 'CashClimb Editorial').trim()
+
+  if (normalized === 'Daniel Reeves') {
+    return {
+      initials: 'DR',
+      role: 'Investment Strategy Contributor',
+      bio: 'Covers portfolio construction, diversification, and long-term investing principles with a focus on clarity and practical decision-making.',
+    }
+  }
+
+  if (normalized === 'Sophie Tran') {
+    return {
+      initials: 'ST',
+      role: 'Credit & Debt Contributor',
+      bio: 'Writes about debt reduction, borrowing decisions, and financial stability with an emphasis on practical next steps and sustainable planning.',
+    }
+  }
+
+  return {
+    initials: 'CE',
+    role: 'CashClimb Editorial',
+    bio: 'CashClimb Editorial produces educational content across investing, personal finance, and credit with a focus on clarity, usefulness, and long-term thinking.',
+  }
+}
+
 export default async function PostPage({ params }: Props) {
   const supabase = createAdminClient()
 
@@ -93,6 +119,8 @@ export default async function PostPage({ params }: Props) {
   const post: Post = postRes.data
   const comments: Comment[] = commentsRes.data ?? []
   const color = CAT_COLORS[post.category] ?? '#888'
+  const author = post.author || 'CashClimb Editorial'
+  const authorProfile = getAuthorProfile(author)
 
   const { data: related } = await supabase
     .from('posts')
@@ -117,7 +145,10 @@ export default async function PostPage({ params }: Props) {
           </Link>
 
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="cat-badge" style={{ background: `${color}22`, color }}>
+            <span
+              className="cat-badge"
+              style={{ background: `${color}22`, color }}
+            >
               {post.category}
             </span>
             <span className="cat-badge bg-[#1A1A1A] text-[#F0EDE8]">
@@ -130,30 +161,46 @@ export default async function PostPage({ params }: Props) {
           </h1>
 
           <div className="bg-bg-2 border border-border rounded-2xl p-6 mb-8">
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="text-[#6A6460] mb-1">Written by</div>
-                <div className="text-[#F0EDE8] font-semibold">
-                  {post.author || 'CashClimb Editorial'}
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold tracking-wide flex-shrink-0">
+                {authorProfile.initials}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
+                  <div className="text-[#F0EDE8] font-semibold">
+                    {author}
+                  </div>
+                  <div className="text-sm text-gold">
+                    {authorProfile.role}
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <div className="text-[#6A6460] mb-1">Last updated</div>
-                <div className="text-[#F0EDE8] font-semibold">
-                  {formatDate(post.updated_at || post.created_at)}
-                </div>
-              </div>
+                <p className="text-sm text-[#9A9490] leading-relaxed mb-4">
+                  {authorProfile.bio}
+                </p>
 
-              <div>
-                <div className="text-[#6A6460] mb-1">Reading time</div>
-                <div className="text-gold font-semibold">{post.read_time}</div>
-              </div>
+                <div className="grid sm:grid-cols-3 gap-3 text-sm">
+                  <div className="bg-bg border border-border rounded-xl p-4">
+                    <div className="text-[#6A6460] mb-1">Last updated</div>
+                    <div className="text-[#F0EDE8] font-semibold">
+                      {formatDate(post.updated_at || post.created_at)}
+                    </div>
+                  </div>
 
-              <div>
-                <div className="text-[#6A6460] mb-1">Views</div>
-                <div className="text-[#9A9490] font-medium">
-                  {post.view_count.toLocaleString()}
+                  <div className="bg-bg border border-border rounded-xl p-4">
+                    <div className="text-[#6A6460] mb-1">Reading time</div>
+                    <div className="text-gold font-semibold">
+                      {post.read_time}
+                    </div>
+                  </div>
+
+                  <div className="bg-bg border border-border rounded-xl p-4">
+                    <div className="text-[#6A6460] mb-1">Reviewed by</div>
+                    <div className="text-[#F0EDE8] font-semibold">
+                      CashClimb Editorial
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

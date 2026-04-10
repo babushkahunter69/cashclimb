@@ -38,9 +38,33 @@ function getUseCase(category: string) {
   }
 }
 
+function getAuthorMeta(author?: string) {
+  const normalized = (author || 'CashClimb Editorial').trim()
+
+  if (normalized === 'Daniel Reeves') {
+    return {
+      initials: 'DR',
+      role: 'Investment Strategy',
+    }
+  }
+
+  if (normalized === 'Sophie Tran') {
+    return {
+      initials: 'ST',
+      role: 'Credit & Debt',
+    }
+  }
+
+  return {
+    initials: 'CE',
+    role: 'Editorial Team',
+  }
+}
+
 export default function PostCard({ post }: { post: Post }) {
   const color = CAT_COLORS[post.category] ?? '#888'
   const author = post.author || 'CashClimb Editorial'
+  const authorMeta = getAuthorMeta(author)
 
   return (
     <Link href={`/blog/${post.slug}`} className="post-card flex flex-col group">
@@ -71,7 +95,10 @@ export default function PostCard({ post }: { post: Post }) {
 
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="cat-badge" style={{ background: `${color}22`, color }}>
+          <span
+            className="cat-badge"
+            style={{ background: `${color}22`, color }}
+          >
             {post.category}
           </span>
           <span className="cat-badge bg-[#1A1A1A] text-[#F0EDE8]">
@@ -95,9 +122,24 @@ export default function PostCard({ post }: { post: Post }) {
           {getUseCase(post.category)}
         </div>
 
-        <div className="mt-auto pt-4 border-t border-border flex justify-between items-center gap-3">
-          <span className="text-xs text-[#9A9490]">Author: {author}</span>
-          <span className="text-gold font-semibold text-xs">Read Guide →</span>
+        <div className="mt-auto pt-4 border-t border-border flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-[11px] font-bold tracking-wide flex-shrink-0">
+              {authorMeta.initials}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs text-[#F0EDE8] font-medium truncate">
+                {author}
+              </div>
+              <div className="text-[11px] text-[#6A6460] truncate">
+                {authorMeta.role}
+              </div>
+            </div>
+          </div>
+
+          <span className="text-gold font-semibold text-xs whitespace-nowrap">
+            Read Guide →
+          </span>
         </div>
       </div>
     </Link>
