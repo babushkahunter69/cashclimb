@@ -2,154 +2,154 @@
 
 import { useMemo, useState } from 'react'
 
-function currency(value: number) {
-  return value.toLocaleString('en-US', {
+function formatCurrency(value: number) {
+  if (!Number.isFinite(value)) return '$0'
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
-  })
+  }).format(value)
+}
+
+function parseNumber(value: string, fallback = 0) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
 }
 
 export default function CompoundCalculator() {
-  const [initial, setInitial] = useState(10000)
-  const [monthly, setMonthly] = useState(500)
-  const [years, setYears] = useState(20)
-  const [rate, setRate] = useState(7)
+  const [initialAmount, setInitialAmount] = useState('10000')
+  const [monthlyContribution, setMonthlyContribution] = useState('500')
+  const [years, setYears] = useState('20')
+  const [annualReturn, setAnnualReturn] = useState('7')
 
-  const result = useMemo(() => {
-    const monthlyRate = rate / 100 / 12
-    const totalMonths = years * 12
+  const results = useMemo(() => {
+    const principal = Math.max(parseNumber(initialAmount), 0)
+    const contribution = Math.max(parseNumber(monthlyContribution), 0)
+    const yearCount = Math.max(parseNumber(years, 1), 1)
+    const annualRate = Math.max(parseNumber(annualReturn), 0)
 
-    let balance = initial
-    let contributions = initial
+    const monthlyRate = annualRate / 100 / 12
+    const totalMonths = yearCount * 12
+
+    let futureValue = principal
 
     for (let i = 0; i < totalMonths; i++) {
-      balance = balance * (1 + monthlyRate)
-      balance += monthly
-      contributions += monthly
+      futureValue = futureValue * (1 + monthlyRate) + contribution
     }
+
+    const totalContributions = principal + contribution * totalMonths
+    const estimatedGrowth = futureValue - totalContributions
 
     return {
-      futureValue: balance,
-      contributions,
-      growth: balance - contributions,
+      futureValue,
+      totalContributions,
+      estimatedGrowth,
     }
-  }, [initial, monthly, years, rate])
+  }, [initialAmount, monthlyContribution, years, annualReturn])
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-10">
-        <p className="text-xs font-bold tracking-[0.2em] uppercase text-gold mb-4">
-          Financial Tool
-        </p>
-        <h1 className="font-serif text-4xl lg:text-5xl font-black leading-[1.08] mb-6">
-          Compound Growth
-          <br />
-          <span className="text-gold">Calculator</span>
-        </h1>
-        <p className="text-[#9A9490] text-lg leading-relaxed max-w-2xl">
-          Estimate how regular contributions and long-term compounding can grow
-          over time. Use it as a planning tool, not a prediction.
-        </p>
-      </div>
+    <div className="grid lg:grid-cols-[1.05fr_.95fr] gap-8">
+      <section className="bg-bg-2 border border-border rounded-3xl p-8">
+        <h2 className="font-serif text-2xl font-bold mb-6 text-[#F0EDE8]">
+          Inputs
+        </h2>
 
-      <div className="grid lg:grid-cols-[1fr_0.95fr] gap-6">
-        <section className="bg-bg-2 border border-border rounded-2xl p-8">
-          <h2 className="font-serif text-2xl font-bold mb-6 text-[#F0EDE8]">
-            Inputs
-          </h2>
+        <div className="grid gap-5">
+          <div>
+            <label className="block text-sm text-[#9A9490] mb-2">
+              Initial amount
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={initialAmount}
+              onChange={(e) => setInitialAmount(e.target.value)}
+              className="cc-input"
+            />
+          </div>
 
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm text-[#9A9490] mb-2">
-                Initial amount
-              </label>
-              <input
-                type="number"
-                value={initial}
-                onChange={(e) => setInitial(Number(e.target.value))}
-                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-[#F0EDE8] outline-none focus:border-gold"
-              />
+          <div>
+            <label className="block text-sm text-[#9A9490] mb-2">
+              Monthly contribution
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="50"
+              value={monthlyContribution}
+              onChange={(e) => setMonthlyContribution(e.target.value)}
+              className="cc-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-[#9A9490] mb-2">
+              Years invested
+            </label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={years}
+              onChange={(e) => setYears(e.target.value)}
+              className="cc-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-[#9A9490] mb-2">
+              Annual return (%)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={annualReturn}
+              onChange={(e) => setAnnualReturn(e.target.value)}
+              className="cc-input"
+            />
+          </div>
+        </div>
+      </section>
+
+      <aside className="bg-bg-2 border border-border rounded-3xl p-8">
+        <h2 className="font-serif text-2xl font-bold mb-5 text-[#F0EDE8]">
+          Results
+        </h2>
+
+        <div className="border border-gold/40 rounded-2xl p-6 bg-[rgba(212,175,55,0.06)] mb-5">
+          <div className="text-[#9A9490] text-sm mb-2">Estimated future value</div>
+          <div className="font-serif text-5xl font-black text-gold">
+            {formatCurrency(results.futureValue)}
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="border border-border rounded-2xl p-5 bg-bg">
+            <div className="text-[#6A6460] text-sm mb-1">
+              Total contributions
             </div>
-
-            <div>
-              <label className="block text-sm text-[#9A9490] mb-2">
-                Monthly contribution
-              </label>
-              <input
-                type="number"
-                value={monthly}
-                onChange={(e) => setMonthly(Number(e.target.value))}
-                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-[#F0EDE8] outline-none focus:border-gold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-[#9A9490] mb-2">
-                Years invested
-              </label>
-              <input
-                type="number"
-                value={years}
-                onChange={(e) => setYears(Number(e.target.value))}
-                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-[#F0EDE8] outline-none focus:border-gold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm text-[#9A9490] mb-2">
-                Expected annual return (%)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={rate}
-                onChange={(e) => setRate(Number(e.target.value))}
-                className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-[#F0EDE8] outline-none focus:border-gold"
-              />
+            <div className="text-[#F0EDE8] text-2xl font-bold">
+              {formatCurrency(results.totalContributions)}
             </div>
           </div>
-        </section>
 
-        <section className="bg-bg-2 border border-border rounded-2xl p-8">
-          <h2 className="font-serif text-2xl font-bold mb-6 text-[#F0EDE8]">
-            Results
-          </h2>
-
-          <div className="space-y-4">
-            <div className="border border-gold/30 rounded-xl p-5 bg-[rgba(212,175,55,0.05)]">
-              <div className="text-sm text-[#9A9490] mb-2">Estimated future value</div>
-              <div className="font-serif text-4xl font-black text-gold">
-                {currency(result.futureValue)}
-              </div>
+          <div className="border border-border rounded-2xl p-5 bg-bg">
+            <div className="text-[#6A6460] text-sm mb-1">
+              Estimated growth
             </div>
-
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="bg-bg border border-border rounded-xl p-5">
-                <div className="text-sm text-[#9A9490] mb-2">Total contributions</div>
-                <div className="text-2xl font-bold text-[#F0EDE8]">
-                  {currency(result.contributions)}
-                </div>
-              </div>
-
-              <div className="bg-bg border border-border rounded-xl p-5">
-                <div className="text-sm text-[#9A9490] mb-2">Estimated growth</div>
-                <div className="text-2xl font-bold text-[#F0EDE8]">
-                  {currency(result.growth)}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <p className="text-sm text-[#9A9490] leading-relaxed">
-                This calculator uses a fixed return assumption and monthly
-                compounding for simplicity. Real investment results will vary and
-                may be lower or higher than shown.
-              </p>
+            <div className="text-[#F0EDE8] text-2xl font-bold">
+              {formatCurrency(results.estimatedGrowth)}
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+
+        <p className="text-sm text-[#6A6460] mt-6 leading-relaxed">
+          This calculator uses a fixed annual return assumption and monthly
+          contributions for planning purposes only.
+        </p>
+      </aside>
     </div>
   )
 }

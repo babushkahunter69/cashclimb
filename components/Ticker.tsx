@@ -1,26 +1,32 @@
 const TICKERS = [
-  { name: 'Reader-first', val: 'Guidance', change: 'No hype', up: true },
-  { name: 'Coverage', val: 'Investing', change: 'Debt', up: true },
-  { name: 'Coverage', val: 'Retirement', change: 'Credit', up: true },
-  { name: 'Coverage', val: 'Taxes', change: 'Property', up: true },
-  { name: 'Publishing', val: 'Reviewed', change: 'Updated', up: true },
-  { name: 'Monetization', val: 'No sponsored rankings', change: 'Clear disclosures', up: true },
-  { name: 'Style', val: 'Plain English', change: 'Practical use cases', up: true },
+  { label: 'Reader-first', value: 'Guidance', accent: 'No hype' },
+  { label: 'Coverage', value: 'Investing', accent: 'Debt' },
+  { label: 'Coverage', value: 'Retirement', accent: 'Credit' },
+  { label: 'Coverage', value: 'Taxes', accent: 'Property' },
+  { label: 'Publishing', value: 'Reviewed', accent: 'Updated' },
+  { label: 'Monetization', value: 'Clear disclosures', accent: 'No sponsored rankings' },
+  { label: 'Style', value: 'Plain English', accent: 'Practical use cases' },
 ]
 
 export default function Ticker() {
-  const doubled = [...TICKERS, ...TICKERS]
+  const items = [...TICKERS, ...TICKERS]
 
   return (
-    <div className="bg-bg-3 border-y border-border py-2 overflow-hidden">
-      <div className="ticker-animate flex gap-12 whitespace-nowrap">
-        {doubled.map((t, i) => (
-          <span key={i} className="inline-flex items-center gap-2 text-xs">
-            <span className="text-[#9A9490] font-medium">{t.name}</span>
-            <span className="text-[#F0EDE8]">{t.val}</span>
-            <span className="text-gold font-semibold">{t.change}</span>
-          </span>
-        ))}
+    <div className="bg-bg-3 border-y border-border overflow-hidden">
+      <div className="ticker-mask">
+        <div className="ticker-animate flex w-max items-center gap-10 py-3 whitespace-nowrap">
+          {items.map((item, i) => (
+            <div
+              key={`${item.label}-${item.value}-${i}`}
+              className="inline-flex items-center gap-3 text-[11px] tracking-[0.14em] uppercase flex-none"
+            >
+              <span className="text-[#7E7873]">{item.label}</span>
+              <span className="text-[#F0EDE8] font-medium">{item.value}</span>
+              <span className="text-gold font-semibold">{item.accent}</span>
+              <span className="text-[#3A3531]">/</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

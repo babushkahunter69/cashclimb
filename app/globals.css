@@ -160,7 +160,7 @@ body {
 }
 
 /* =========================
-   FORCE FORM CONTROLS TO MATCH THEME
+   FORM CONTROLS
    ========================= */
 
 input,
@@ -175,7 +175,6 @@ select {
 input::placeholder,
 textarea::placeholder {
   color: var(--cc-muted-2);
-  opacity: 1;
 }
 
 input:focus,
@@ -310,4 +309,65 @@ select {
 .prose-cashclimb img {
   border-radius: 1rem;
   margin: 1.5rem 0;
+}
+
+/* =========================
+   PREMIUM TICKER
+   ========================= */
+
+.ticker-mask {
+  position: relative;
+  overflow: hidden;
+}
+
+.ticker-mask::before,
+.ticker-mask::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 96px;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ticker-mask::before {
+  left: 0;
+  background: linear-gradient(to right, #181a1d 0%, rgba(24, 26, 29, 0) 100%);
+}
+
+.ticker-mask::after {
+  right: 0;
+  background: linear-gradient(to left, #181a1d 0%, rgba(24, 26, 29, 0) 100%);
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.ticker-animate {
+  width: max-content;
+  will-change: transform;
+  animation: ticker-scroll 42s linear infinite;
+}
+
+.ticker-animate:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-animate {
+    animation: none;
+    transform: translateX(0);
+  }
+
+  .ticker-mask::before,
+  .ticker-mask::after {
+    display: none;
+  }
 }
