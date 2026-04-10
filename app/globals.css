@@ -3,31 +3,235 @@
 @tailwind utilities;
 
 /* =========================
-   BASE STYLES
+   BASE
    ========================= */
 
+html {
+  background: #0b0b0c;
+}
+
 body {
-  background-color: #0B0B0C;
-  color: #F0EDE8;
+  background: #0b0b0c;
+  color: #f0ede8;
   font-family: ui-sans-serif, system-ui, sans-serif;
 }
 
 /* =========================
-   ARTICLE CONTENT (FIXED)
+   THEME TOKENS
+   ========================= */
+
+:root {
+  --cc-bg: #0b0b0c;
+  --cc-bg-2: #121315;
+  --cc-bg-3: #181a1d;
+  --cc-border: rgba(255, 255, 255, 0.1);
+  --cc-text: #f0ede8;
+  --cc-muted: #9a9490;
+  --cc-muted-2: #6a6460;
+  --cc-gold: #d4af37;
+  --cc-gold-light: #f1cf63;
+}
+
+/* =========================
+   REUSABLE UI
+   ========================= */
+
+@layer components {
+  .bg-bg {
+    background-color: var(--cc-bg);
+  }
+
+  .bg-bg-2 {
+    background-color: var(--cc-bg-2);
+  }
+
+  .bg-bg-3 {
+    background-color: var(--cc-bg-3);
+  }
+
+  .border-border {
+    border-color: var(--cc-border);
+  }
+
+  .text-gold {
+    color: var(--cc-gold);
+  }
+
+  .text-gold-light {
+    color: var(--cc-gold-light);
+  }
+
+  .cc-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--cc-text);
+  }
+
+  .cc-input {
+    width: 100%;
+    border-radius: 0.9rem;
+    border: 1px solid var(--cc-border);
+    background: #111214;
+    color: var(--cc-text);
+    padding: 0.85rem 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .cc-input::placeholder {
+    color: var(--cc-muted-2);
+    opacity: 1;
+  }
+
+  .cc-input:focus {
+    border-color: var(--cc-gold);
+    box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25);
+  }
+
+  .cc-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    border: 1px solid var(--cc-gold);
+    background: var(--cc-gold);
+    color: #0b0b0c;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .cc-btn-primary:hover {
+    opacity: 0.92;
+  }
+
+  .cc-btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    border: 1px solid var(--cc-border);
+    background: transparent;
+    color: var(--cc-muted);
+    padding: 0.85rem 1.1rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .cc-btn-ghost:hover {
+    color: var(--cc-gold);
+    border-color: var(--cc-gold);
+  }
+
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.28rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .section-title {
+    color: var(--cc-text);
+  }
+
+  .post-card {
+    border: 1px solid var(--cc-border);
+    background: var(--cc-bg-2);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .post-card:hover {
+    border-color: var(--cc-gold);
+    transform: translateY(-1px);
+  }
+}
+
+/* =========================
+   FORCE FORM CONTROLS TO MATCH THEME
+   ========================= */
+
+input,
+textarea,
+select {
+  background: #111214;
+  color: var(--cc-text);
+  border: 1px solid var(--cc-border);
+  border-radius: 0.9rem;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--cc-muted-2);
+  opacity: 1;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--cc-gold);
+  box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.25);
+}
+
+/* Chrome / Safari autofill fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--cc-text);
+  -webkit-box-shadow: 0 0 0px 1000px #111214 inset;
+  box-shadow: 0 0 0px 1000px #111214 inset;
+  transition: background-color 9999s ease-in-out 0s;
+  border: 1px solid var(--cc-border);
+}
+
+/* Remove weird native appearance differences */
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* =========================
+   ARTICLE CONTENT
    ========================= */
 
 .prose-cashclimb {
-  color: #9A9490;
+  color: var(--cc-muted);
   font-size: 1.125rem;
   line-height: 1.9;
 }
 
-/* Headings */
 .prose-cashclimb h1,
 .prose-cashclimb h2,
 .prose-cashclimb h3,
 .prose-cashclimb h4 {
-  color: #F0EDE8;
+  color: var(--cc-text);
   font-family: Georgia, serif;
   line-height: 1.2;
 }
@@ -46,12 +250,10 @@ body {
   margin-bottom: 0.6rem;
 }
 
-/* Paragraphs */
 .prose-cashclimb p {
   margin: 0.9rem 0;
 }
 
-/* Lists (THIS FIXES YOUR ISSUE) */
 .prose-cashclimb ul,
 .prose-cashclimb ol {
   margin: 1rem 0 1.4rem 1.5rem;
@@ -73,43 +275,38 @@ body {
 }
 
 .prose-cashclimb li::marker {
-  color: #D4AF37;
+  color: var(--cc-gold);
   font-size: 0.95em;
 }
 
-/* Fix spacing before lists */
 .prose-cashclimb p:has(+ ul),
 .prose-cashclimb p:has(+ ol) {
   margin-bottom: 0.3rem;
 }
 
-/* Links */
 .prose-cashclimb a {
-  color: #D4AF37;
+  color: var(--cc-gold);
   text-decoration: none;
 }
 
 .prose-cashclimb a:hover {
-  color: #F1CF63;
+  color: var(--cc-gold-light);
   text-decoration: underline;
 }
 
-/* Divider */
 .prose-cashclimb hr {
   border: none;
   border-top: 1px solid rgba(240, 237, 232, 0.3);
   margin: 2rem 0;
 }
 
-/* Blockquote */
 .prose-cashclimb blockquote {
   margin: 1.5rem 0;
   padding-left: 1rem;
-  border-left: 3px solid #D4AF37;
-  color: #B8B2AD;
+  border-left: 3px solid var(--cc-gold);
+  color: #b8b2ad;
 }
 
-/* Images */
 .prose-cashclimb img {
   border-radius: 1rem;
   margin: 1.5rem 0;
