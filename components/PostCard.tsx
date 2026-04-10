@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { getAuthorByName } from '@/lib/authors'
 import type { Post } from '@/types'
 
 const CAT_COLORS: Record<string, string> = {
@@ -38,37 +39,13 @@ function getUseCase(category: string) {
   }
 }
 
-function getAuthorMeta(author?: string) {
-  const normalized = (author || 'CashClimb Editorial').trim()
-
-  if (normalized === 'Daniel Reeves') {
-    return {
-      initials: 'DR',
-      role: 'Investment Strategy',
-    }
-  }
-
-  if (normalized === 'Sophie Tran') {
-    return {
-      initials: 'ST',
-      role: 'Credit & Debt',
-    }
-  }
-
-  return {
-    initials: 'CE',
-    role: 'Editorial Team',
-  }
-}
-
 export default function PostCard({ post }: { post: Post }) {
   const color = CAT_COLORS[post.category] ?? '#888'
-  const author = post.author || 'CashClimb Editorial'
-  const authorMeta = getAuthorMeta(author)
+  const author = getAuthorByName(post.author)
 
   return (
-    <Link href={`/blog/${post.slug}`} className="post-card flex flex-col group">
-      <div className="h-44 relative overflow-hidden bg-gradient-to-br from-[#0D1A14] to-[#1A1000] flex-shrink-0">
+    <article className="post-card flex flex-col group overflow-hidden">
+      <Link href={`/blog/${post.slug}`} className="block h-44 relative bg-gradient-to-br from-[#0D1A14] to-[#1A1000] flex-shrink-0 overflow-hidden">
         {post.cover_url ? (
           <Image
             src={post.cover_url}
@@ -91,7 +68,7 @@ export default function PostCard({ post }: { post: Post }) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -111,7 +88,9 @@ export default function PostCard({ post }: { post: Post }) {
         </div>
 
         <h3 className="font-serif text-lg font-bold leading-snug mb-2 text-[#F0EDE8]">
-          {post.title}
+          <Link href={`/blog/${post.slug}`} className="hover:text-gold transition-colors">
+            {post.title}
+          </Link>
         </h3>
 
         <p className="text-[#9A9490] text-sm leading-relaxed mb-4 line-clamp-3">
@@ -125,23 +104,31 @@ export default function PostCard({ post }: { post: Post }) {
         <div className="mt-auto pt-4 border-t border-border flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-[11px] font-bold tracking-wide flex-shrink-0">
-              {authorMeta.initials}
+              {author.initials}
             </div>
+
             <div className="min-w-0">
-              <div className="text-xs text-[#F0EDE8] font-medium truncate">
-                {author}
-              </div>
+              <Link
+                href={`/authors/${author.slug}`}
+                className="text-xs text-[#F0EDE8] font-medium truncate hover:text-gold transition-colors"
+              >
+                {author.name}
+              </Link>
+
               <div className="text-[11px] text-[#6A6460] truncate">
-                {authorMeta.role}
+                {author.role}
               </div>
             </div>
           </div>
 
-          <span className="text-gold font-semibold text-xs whitespace-nowrap">
+          <Link
+            href={`/blog/${post.slug}`}
+            className="text-gold font-semibold text-xs whitespace-nowrap hover:opacity-80 transition-opacity"
+          >
             Read Guide →
-          </span>
+          </Link>
         </div>
       </div>
-    </Link>
+    </article>
   )
 }

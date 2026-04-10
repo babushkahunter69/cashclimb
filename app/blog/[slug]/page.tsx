@@ -8,6 +8,7 @@ import Footer from '@/components/Footer'
 import Comments from '@/components/Comments'
 import PostCard from '@/components/PostCard'
 import ViewTracker from '@/components/ViewTracker'
+import { getAuthorByName } from '@/lib/authors'
 import type { Post, Comment } from '@/types'
 
 export const revalidate = 60
@@ -71,32 +72,6 @@ function formatDate(date: string) {
   })
 }
 
-function getAuthorProfile(author?: string) {
-  const normalized = (author || 'CashClimb Editorial').trim()
-
-  if (normalized === 'Daniel Reeves') {
-    return {
-      initials: 'DR',
-      role: 'Investment Strategy Contributor',
-      bio: 'Covers portfolio construction, diversification, and long-term investing principles with a focus on clarity and practical decision-making.',
-    }
-  }
-
-  if (normalized === 'Sophie Tran') {
-    return {
-      initials: 'ST',
-      role: 'Credit & Debt Contributor',
-      bio: 'Writes about debt reduction, borrowing decisions, and financial stability with an emphasis on practical next steps and sustainable planning.',
-    }
-  }
-
-  return {
-    initials: 'CE',
-    role: 'CashClimb Editorial',
-    bio: 'CashClimb Editorial produces educational content across investing, personal finance, and credit with a focus on clarity, usefulness, and long-term thinking.',
-  }
-}
-
 export default async function PostPage({ params }: Props) {
   const supabase = createAdminClient()
 
@@ -119,8 +94,9 @@ export default async function PostPage({ params }: Props) {
   const post: Post = postRes.data
   const comments: Comment[] = commentsRes.data ?? []
   const color = CAT_COLORS[post.category] ?? '#888'
-  const author = post.author || 'CashClimb Editorial'
-  const authorProfile = getAuthorProfile(author)
+
+  // ✅ NEW AUTHOR SYSTEM
+  const author = getAuthorByName(post.author)
 
   const { data: related } = await supabase
     .from('posts')
@@ -160,24 +136,29 @@ export default async function PostPage({ params }: Props) {
             {post.title}
           </h1>
 
+          {/* ✅ UPDATED AUTHOR CARD */}
           <div className="bg-bg-2 border border-border rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold tracking-wide flex-shrink-0">
-                {authorProfile.initials}
+                {author.initials}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
-                  <div className="text-[#F0EDE8] font-semibold">
-                    {author}
-                  </div>
+                  <Link
+                    href={`/authors/${author.slug}`}
+                    className="text-[#F0EDE8] font-semibold hover:text-gold transition-colors"
+                  >
+                    {author.name}
+                  </Link>
+
                   <div className="text-sm text-gold">
-                    {authorProfile.role}
+                    {author.role}
                   </div>
                 </div>
 
                 <p className="text-sm text-[#9A9490] leading-relaxed mb-4">
-                  {authorProfile.bio}
+                  {author.intro}
                 </p>
 
                 <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -251,23 +232,56 @@ export default async function PostPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: cleanPostBody(post.body) }}
           />
 
+          {/* ✅ AUTHOR BOX (BOTTOM) */}
+          <div className="mt-10 bg-bg-2 border border-border rounded-2xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold tracking-wide flex-shrink-0">
+                {author.initials}
+              </div>
+
+              <div>
+                <p className="text-sm text-[#6A6460] mb-1">
+                  About the author
+                </p>
+
+                <h2 className="text-[#F0EDE8] font-semibold mb-1">
+                  <Link
+                    href={`/authors/${author.slug}`}
+                    className="hover:text-gold transition-colors"
+                  >
+                    {author.name}
+                  </Link>
+                </h2>
+
+                <p className="text-sm text-gold mb-3">
+                  {author.role}
+                </p>
+
+                <p className="text-sm text-[#9A9490] leading-relaxed mb-4">
+                  {author.intro}
+                </p>
+
+                <Link
+                  href={`/authors/${author.slug}`}
+                  className="text-sm font-semibold text-gold hover:opacity-80 transition-opacity"
+                >
+                  View author page
+                </Link>
+              </div>
+            </div>
+          </div>
+
           <div className="mt-12 grid gap-4">
             <div className="p-5 bg-bg-2 border border-border rounded-xl">
               <p className="text-sm text-[#9A9490] leading-relaxed">
                 <strong className="text-[#F0EDE8]">Editorial note:</strong> CashClimb
                 aims to provide clear, plain-English financial education.
-                Articles should be interpreted as general information, not
-                personalised financial advice.
               </p>
             </div>
 
             <div className="p-5 bg-bg-2 border border-border rounded-xl">
               <p className="text-sm text-[#9A9490] leading-relaxed">
-                <strong className="text-[#F0EDE8]">Disclaimer:</strong> The
-                content on CashClimb is for informational and educational
-                purposes only. It does not constitute financial, investment, or
-                tax advice. Always consult a qualified professional before
-                making significant financial decisions.
+                <strong className="text-[#F0EDE8]">Disclaimer:</strong> Informational only.
               </p>
             </div>
           </div>
