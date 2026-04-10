@@ -11,8 +11,9 @@ export default function Navbar() {
   const links = [
     { href: '/', label: 'Home' },
     { href: '/blog', label: 'Articles' },
-    { href: '/#standards', label: 'Standards' },
-    { href: '/#faq', label: 'FAQ' },
+    { href: '/about', label: 'About' },
+    { href: '/editorial-standards', label: 'Standards' },
+    { href: '/tools/compound-calculator', label: 'Tools' },
   ]
 
   return (
@@ -36,7 +37,9 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               className={`text-sm font-medium tracking-wide transition-colors ${
-                pathname === link.href ? 'text-gold' : 'text-[#9A9490] hover:text-gold'
+                pathname === link.href
+                  ? 'text-gold'
+                  : 'text-[#9A9490] hover:text-gold'
               }`}
             >
               {link.label}

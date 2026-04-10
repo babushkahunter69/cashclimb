@@ -1,42 +1,98 @@
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+
 export default function EditorialStandardsPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-20">
-      <h1 className="font-serif text-4xl font-black mb-6">
-        Editorial Standards
-      </h1>
+    <>
+      <Navbar />
 
-      <p className="text-gray-600 mb-8">
-        CashClimb exists to provide clear, practical financial education. 
-        Our goal is to help readers make better decisions — not to overwhelm them with jargon or sell products.
-      </p>
+      <main className="max-w-4xl mx-auto px-6 py-16">
+        <div className="mb-10">
+          <p className="text-xs font-bold tracking-[0.2em] uppercase text-gold mb-4">
+            Editorial Standards
+          </p>
+          <h1 className="font-serif text-4xl lg:text-5xl font-black leading-[1.08] mb-6">
+            How CashClimb creates
+            <br />
+            <span className="text-gold">useful, trustworthy content.</span>
+          </h1>
+          <p className="text-[#9A9490] text-lg leading-relaxed max-w-2xl">
+            CashClimb exists to provide clear, practical financial education.
+            These standards explain how content is written, reviewed, and framed
+            for readers making real-world money decisions.
+          </p>
+        </div>
 
-      <h2 className="text-2xl font-bold mt-10 mb-3">How we write</h2>
-      <p className="text-gray-600">
-        Every article is written to answer a real financial question. We prioritise clarity, usefulness, and decision-making over complexity or theory.
-      </p>
+        <div className="grid gap-6">
+          <section className="bg-bg-2 border border-border rounded-2xl p-8">
+            <h2 className="font-serif text-2xl font-bold mb-4 text-[#F0EDE8]">
+              How we write
+            </h2>
+            <p className="text-[#9A9490] leading-relaxed">
+              Every article should answer a real financial question. We prioritise
+              clarity, usefulness, and decision-making value over complexity,
+              jargon, or content written purely for volume.
+            </p>
+          </section>
 
-      <h2 className="text-2xl font-bold mt-10 mb-3">How we review</h2>
-      <p className="text-gray-600">
-        Articles are reviewed for clarity, accuracy, and relevance. Where financial rules or market conditions change, we aim to update content accordingly.
-      </p>
+          <section className="bg-bg-2 border border-border rounded-2xl p-8">
+            <h2 className="font-serif text-2xl font-bold mb-4 text-[#F0EDE8]">
+              How we review
+            </h2>
+            <p className="text-[#9A9490] leading-relaxed mb-4">
+              Articles are reviewed for clarity, structure, and relevance before
+              publication. When market conditions, lending environments, tax
+              settings, or other material facts change, content should be updated
+              where appropriate.
+            </p>
+            <p className="text-[#9A9490] leading-relaxed">
+              Readers should be able to see who wrote the content, when it was
+              last updated, and what the article is intended to help them
+              understand.
+            </p>
+          </section>
 
-      <h2 className="text-2xl font-bold mt-10 mb-3">What we don’t do</h2>
-      <ul className="list-disc pl-5 text-gray-600 space-y-2">
-        <li>No sponsored rankings</li>
-        <li>No paid product placements disguised as advice</li>
-        <li>No hype-driven or misleading claims</li>
-      </ul>
+          <div className="grid md:grid-cols-2 gap-6">
+            <section className="bg-bg-2 border border-border rounded-2xl p-8">
+              <h2 className="font-serif text-2xl font-bold mb-4 text-[#F0EDE8]">
+                What we aim to do
+              </h2>
+              <ul className="space-y-3 text-[#9A9490]">
+                <li>• Explain financial topics in plain English</li>
+                <li>• Show tradeoffs instead of one-sided conclusions</li>
+                <li>• Focus on long-term usefulness</li>
+                <li>• Help readers make better decisions</li>
+              </ul>
+            </section>
 
-      <h2 className="text-2xl font-bold mt-10 mb-3">What readers should expect</h2>
-      <ul className="list-disc pl-5 text-gray-600 space-y-2">
-        <li>Plain-English explanations</li>
-        <li>Clear tradeoffs, not one-sided opinions</li>
-        <li>Guidance focused on real-world decisions</li>
-      </ul>
+            <section className="bg-bg-2 border border-border rounded-2xl p-8">
+              <h2 className="font-serif text-2xl font-bold mb-4 text-[#F0EDE8]">
+                What we avoid
+              </h2>
+              <ul className="space-y-3 text-[#9A9490]">
+                <li>• Sponsored rankings</li>
+                <li>• Product placement disguised as education</li>
+                <li>• Hype-driven headlines</li>
+                <li>• Overstated promises or certainty</li>
+              </ul>
+            </section>
+          </div>
 
-      <div className="mt-12 p-5 bg-gray-100 rounded-xl text-sm text-gray-600">
-        CashClimb provides educational content only and does not offer personalised financial advice.
-      </div>
-    </main>
+          <section className="border border-gold/30 rounded-2xl p-8 bg-[rgba(212,175,55,0.04)]">
+            <h2 className="font-serif text-2xl font-bold mb-4 text-[#F0EDE8]">
+              Scope and limitations
+            </h2>
+            <p className="text-[#9A9490] leading-relaxed">
+              CashClimb provides general educational content only. Nothing on the
+              site should be interpreted as personalised financial, investment,
+              legal, or tax advice. Readers should seek professional guidance
+              where their circumstances require it.
+            </p>
+          </section>
+        </div>
+      </main>
+
+      <Footer />
+    </>
   )
 }

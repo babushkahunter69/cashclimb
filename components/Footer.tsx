@@ -50,8 +50,8 @@ export default function Footer() {
               {[
                 { href: '/', label: 'Home' },
                 { href: '/blog', label: 'All Articles' },
-                { href: '/#faq', label: 'FAQ' },
-                { href: '/admin', label: 'Write a Post' },
+                { href: '/about', label: 'About' },
+                { href: '/tools/compound-calculator', label: 'Compound Calculator' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -71,7 +71,7 @@ export default function Footer() {
             </div>
             <ul className="space-y-2">
               {[
-                { href: '/#standards', label: 'Editorial Standards' },
+                { href: '/editorial-standards', label: 'Editorial Standards' },
                 { href: '/#faq', label: 'Reader FAQ' },
                 { href: '/blog', label: 'Reviewed Articles' },
               ].map((link) => (
