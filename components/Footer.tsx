@@ -51,7 +51,7 @@ export default function Footer() {
                 { href: '/', label: 'Home' },
                 { href: '/blog', label: 'All Articles' },
                 { href: '/about', label: 'About' },
-                { href: '/tools/compound-calculator', label: 'Compound Calculator' },
+                { href: '/tools', label: 'Tools' },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
