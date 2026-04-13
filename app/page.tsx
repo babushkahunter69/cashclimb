@@ -16,15 +16,6 @@ const CAT_COLORS: Record<string, string> = {
   Retirement: '#C46A8A',
 }
 
-const CATEGORIES = [
-  'Investing',
-  'Personal Finance',
-  'Credit',
-  'Taxes',
-  'Real Estate',
-  'Retirement',
-]
-
 export const revalidate = 60
 
 function formatDate(date: string) {
@@ -73,7 +64,7 @@ export default async function HomePage() {
             <Link href="/blog" className="cc-btn-primary inline-block">
               Explore Trusted Guides
             </Link>
-            <Link href="/#standards" className="cc-btn-ghost inline-block">
+            <Link href="/editorial-standards" className="cc-btn-ghost inline-block">
               See Editorial Standards
             </Link>
           </div>
@@ -167,18 +158,35 @@ export default async function HomePage() {
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
-            {[
-              ['What readers need', 'Clear, useful explanations'],
-              ['What builds trust', 'Visible editorial standards'],
-              ['What makes it useful', 'Articles plus practical tools'],
-            ].map(([title, body]) => (
-              <div key={title} className="bg-bg-2 border border-border rounded-xl p-5">
-                <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
-                  {title}
-                </div>
-                <div className="text-sm text-[#F0EDE8]">{body}</div>
+            <div className="bg-bg-2 border border-border rounded-xl p-5">
+              <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
+                What readers need
               </div>
-            ))}
+              <div className="text-sm text-[#F0EDE8]">
+                Clear, useful explanations
+              </div>
+            </div>
+
+            <Link
+              href="/editorial-standards"
+              className="bg-bg-2 border border-border rounded-xl p-5 hover:border-gold transition-colors"
+            >
+              <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
+                What builds trust
+              </div>
+              <div className="text-sm text-[#F0EDE8]">
+                Visible editorial standards
+              </div>
+            </Link>
+
+            <div className="bg-bg-2 border border-border rounded-xl p-5">
+              <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
+                What makes it useful
+              </div>
+              <div className="text-sm text-[#F0EDE8]">
+                Articles plus practical tools
+              </div>
+            </div>
           </div>
         </div>
       </section>
