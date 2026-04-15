@@ -16,7 +16,7 @@ const dmSans = DM_Sans({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org'),
   title: {
     default: 'CashClimb — Personal Finance & Investing Intelligence',
     template: '%s | CashClimb',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://cashclimb.com',
+    url: 'https://cashclimb.org',
     siteName: 'CashClimb',
     images: [{ url: '/og-default.png', width: 1200, height: 630 }],
   },

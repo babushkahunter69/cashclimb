@@ -1,9 +1,54 @@
-import { NextResponse } from 'next/server'
+import { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase-server'
+import { AUTHORS } from '@/lib/authors'
 
-export async function GET() {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org'
   const supabase = createAdminClient()
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://cashclimb.com'
+
+  const staticPages: MetadataRoute.Sitemap = [
+    {
+      url: `${base}/`,
+      changeFrequency: 'daily',
+      priority: 1,
+    },
+    {
+      url: `${base}/about`,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${base}/blog`,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    {
+      url: `${base}/editorial-standards`,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${base}/tools`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${base}/tools/compound-calculator`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${base}/tools/savings-calculator`,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+  ]
+
+  const authorPages: MetadataRoute.Sitemap = AUTHORS.map((author) => ({
+    url: `${base}/authors/${author.slug}`,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
 
   const { data: posts } = await supabase
     .from('posts')
@@ -11,27 +56,13 @@ export async function GET() {
     .eq('published', true)
     .order('updated_at', { ascending: false })
 
-  const staticPages = ['', '/blog']
+  const blogPages: MetadataRoute.Sitemap =
+    posts?.map((post) => ({
+      url: `${base}/blog/${post.slug}`,
+      lastModified: post.updated_at || undefined,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    })) ?? []
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticPages.map(path => `  <url>
-    <loc>${base}${path}</loc>
-    <changefreq>daily</changefreq>
-    <priority>${path === '' ? '1.0' : '0.8'}</priority>
-  </url>`).join('\n')}
-${posts?.map(p => `  <url>
-    <loc>${base}/blog/${p.slug}</loc>
-    <lastmod>${p.updated_at?.slice(0, 10)}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>`).join('\n') ?? ''}
-</urlset>`
-
-  return new NextResponse(xml, {
-    headers: {
-      'Content-Type': 'application/xml',
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
-    },
-  })
+  return [...staticPages, ...authorPages, ...blogPages]
 }
