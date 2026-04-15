@@ -4,6 +4,7 @@ export const revalidate = 0
 import { createAdminClient } from '@/lib/supabase-server'
 import Link from 'next/link'
 import DeletePostButton from '@/components/DeletePostButton'
+import EditorialActionButtons from '@/components/admin/EditorialActionButtons'
 
 type PostRow = {
   id: string
@@ -12,6 +13,9 @@ type PostRow = {
   category: string | null
   author: string | null
   published: boolean
+  status: 'draft' | 'review_required' | 'approved' | 'published' | 'rejected' | null
+  quality_score: number | null
+  risk_level: 'low' | 'medium' | 'high' | null
   view_count: number | null
   created_at: string | null
 }
@@ -21,16 +25,22 @@ function formatDate(date: string | null) {
   return date.slice(0, 10)
 }
 
-function StatusBadge({ published }: { published: boolean }) {
+function StatusBadge({ published, status }: { published: boolean; status: PostRow['status'] }) {
+  const label = published ? 'Published' : status ?? 'draft'
+  const tone =
+    label === 'published'
+      ? 'bg-emerald-400/10 text-emerald-400'
+      : label === 'approved'
+        ? 'bg-sky-400/10 text-sky-300'
+        : label === 'review_required'
+          ? 'bg-yellow-400/10 text-yellow-400'
+          : label === 'rejected'
+            ? 'bg-red-400/10 text-red-300'
+            : 'bg-zinc-400/10 text-zinc-300'
+
   return (
-    <span
-      className={`inline-flex items-center rounded px-2 py-1 text-xs font-bold ${
-        published
-          ? 'bg-emerald-400/10 text-emerald-400'
-          : 'bg-yellow-400/10 text-yellow-400'
-      }`}
-    >
-      {published ? 'Live' : 'Draft'}
+    <span className={`inline-flex items-center rounded px-2 py-1 text-xs font-bold capitalize ${tone}`}>
+      {String(label).replace('_', ' ')}
     </span>
   )
 }
@@ -55,7 +65,7 @@ function PostsTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-border">
-            {['Title', 'Category', 'Author', 'Views', 'Status', 'Date', 'Actions'].map((h) => (
+            {['Title', 'Category', 'Author', 'Views', 'Workflow', 'Date', 'Actions'].map((h) => (
               <th
                 key={h}
                 className="px-5 py-3 text-left text-xs font-bold tracking-widest uppercase text-[#6A6460]"
@@ -75,6 +85,18 @@ function PostsTable({
                 <div className="max-w-[320px]">
                   <p className="text-sm font-medium truncate">{p.title}</p>
                   <p className="text-xs text-[#6A6460] truncate">/{p.slug}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {p.quality_score !== null && (
+                      <span className="rounded bg-bg px-2 py-1 text-[11px] text-[#BFB8B2]">
+                        Score: {p.quality_score}
+                      </span>
+                    )}
+                    {p.risk_level && (
+                      <span className="rounded bg-bg px-2 py-1 text-[11px] capitalize text-[#BFB8B2]">
+                        Risk: {p.risk_level}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </td>
 
@@ -91,7 +113,7 @@ function PostsTable({
               </td>
 
               <td className="px-5 py-4">
-                <StatusBadge published={p.published} />
+                <StatusBadge published={p.published} status={p.status} />
               </td>
 
               <td className="px-5 py-4 text-xs text-[#6A6460]">
@@ -99,7 +121,7 @@ function PostsTable({
               </td>
 
               <td className="px-5 py-4">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Link
                     href={`/blog/${p.slug}`}
                     target="_blank"
@@ -114,6 +136,13 @@ function PostsTable({
                   >
                     Edit
                   </Link>
+
+                  <EditorialActionButtons
+                    postId={p.id}
+                    status={p.status}
+                    published={p.published}
+                    compact
+                  />
 
                   <DeletePostButton postId={p.id} />
                 </div>
@@ -131,7 +160,7 @@ export default async function AdminPostsPage() {
 
   const { data: posts, error } = await supabase
     .from('posts')
-    .select('id, title, slug, category, author, published, view_count, created_at')
+    .select('id, title, slug, category, author, published, status, quality_score, risk_level, view_count, created_at')
     .order('created_at', { ascending: false })
 
   const safePosts: PostRow[] = posts ?? []

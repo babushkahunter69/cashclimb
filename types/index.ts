@@ -41,3 +41,25 @@ export interface AnalyticsSummary {
   views_by_category: { category: string; views: number }[]
   recent_comments: Comment[]
 }
+
+
+export type WorkflowStatus =
+  | 'draft'
+  | 'review_required'
+  | 'approved'
+  | 'published'
+  | 'rejected'
+
+export interface WorkflowCheck {
+  name: string
+  passed: boolean
+  details: string
+  severity: 'info' | 'warn' | 'error'
+}
+
+export interface WorkflowEvaluation {
+  score: number
+  passed: boolean
+  risk_level: 'low' | 'medium' | 'high'
+  checks: WorkflowCheck[]
+}

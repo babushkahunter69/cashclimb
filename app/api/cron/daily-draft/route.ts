@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import slugify from 'slugify'
 import readingTime from 'reading-time'
 import { createAdminClient } from '@/lib/supabase-server'
+import { evaluateFinanceArticle, nextStatusFromEvaluation } from '@/lib/editorial-workflow'
+import { requireAdmin } from '@/lib/admin-guard'
 import type { Category } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -57,6 +59,14 @@ type CandidateSelection = {
   category: Category
   seedTopic: string
   plan: TopicPlan
+}
+
+type QueueRow = {
+  id: string
+  keyword: string
+  category: Category
+  intent: string
+  brief: Record<string, any> | null
 }
 
 const AUTHOR_NAME = 'CashClimb Editorial'
@@ -846,11 +856,24 @@ async function generateArticle(
 async function createDraftPost(
   article: GeneratedArticle,
   category: Category,
-  coverUrl: string | null
+  coverUrl: string | null,
+  plan: TopicPlan,
+  outline: ArticleOutline
 ) {
   const supabase = createAdminClient()
   const slug = buildSlug(article.title)
   const readTime = readingTime(stripHtml(article.contentHtml)).text
+  const evaluation = evaluateFinanceArticle({
+    title: article.title,
+    excerpt: article.excerpt,
+    body: article.contentHtml,
+    primaryKeyword: outline.primaryKeyword,
+    category,
+    seoTitle: article.seoTitle,
+    seoDescription: article.seoDescription,
+    coverUrl,
+  })
+  const status = nextStatusFromEvaluation(evaluation)
 
   const payload: Record<string, any> = {
     title: article.title,
@@ -862,6 +885,18 @@ async function createDraftPost(
     cover_url: coverUrl,
     seo_title: article.seoTitle,
     seo_description: article.seoDescription,
+    primary_keyword: outline.primaryKeyword,
+    related_keywords: outline.relatedKeywords,
+    quality_score: evaluation.score,
+    risk_level: evaluation.risk_level,
+    status,
+    workflow_meta: {
+      angle: plan.angle,
+      audience: plan.audience,
+      searchIntent: outline.searchIntent,
+      seedKeyword: plan.primaryKeyword,
+      externalSources: outline.externalSources,
+    },
     published: false,
     read_time: readTime,
   }
@@ -872,7 +907,176 @@ async function createDraftPost(
     throw new Error(error.message)
   }
 
+  const { error: qualityError } = await supabase.from('quality_checks').insert({
+    post_id: data.id,
+    score: evaluation.score,
+    passed: evaluation.passed,
+    risk_level: evaluation.risk_level,
+    checks: evaluation.checks,
+  })
+
+  if (qualityError) {
+    throw new Error(qualityError.message)
+  }
+
   return data
+}
+
+
+async function claimSpecificQueuedKeyword(keywordId: string): Promise<QueueRow | null> {
+  const supabase = createAdminClient()
+  const { data: updated, error } = await supabase
+    .from('keyword_queue')
+    .update({ status: 'processing', updated_at: new Date().toISOString() })
+    .eq('id', keywordId)
+    .eq('status', 'queued')
+    .select('id, keyword, category, intent, brief')
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return (updated as QueueRow | null) ?? null
+}
+
+async function claimQueuedKeywords(limit: number): Promise<QueueRow[]> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('keyword_queue')
+    .select('id, keyword, category, intent, brief')
+    .eq('status', 'queued')
+    .order('priority', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(limit)
+
+  if (error) throw new Error(error.message)
+
+  const claimed: QueueRow[] = []
+  for (const row of (data ?? []) as QueueRow[]) {
+    const { data: updated, error: updateError } = await supabase
+      .from('keyword_queue')
+      .update({ status: 'processing', updated_at: new Date().toISOString() })
+      .eq('id', row.id)
+      .eq('status', 'queued')
+      .select('id, keyword, category, intent, brief')
+      .maybeSingle()
+
+    if (updateError) throw new Error(updateError.message)
+    if (updated) claimed.push(updated as QueueRow)
+  }
+
+  return claimed
+}
+
+async function updateQueueStatus(
+  queueId: string,
+  status: 'completed' | 'failed' | 'skipped',
+  brief: Record<string, any> = {},
+  notes?: string
+) {
+  const supabase = createAdminClient()
+  const payload: Record<string, any> = {
+    status,
+    brief,
+    updated_at: new Date().toISOString(),
+  }
+  if (status === 'completed' || status === 'failed' || status === 'skipped') {
+    payload.processed_at = new Date().toISOString()
+  }
+  if (notes) payload.notes = notes
+
+  const { error } = await supabase.from('keyword_queue').update(payload).eq('id', queueId)
+  if (error) throw new Error(error.message)
+}
+
+async function runDraftGeneration(now: Date, queueItem?: QueueRow) {
+  const preferredCategory = getCategoryForToday(now)
+  const candidate = queueItem
+    ? { category: queueItem.category, seedTopic: queueItem.keyword, plan: await generateTopicPlan(queueItem.category, queueItem.keyword) }
+    : await pickCandidateForToday(now)
+
+  if (!candidate) {
+    return {
+      success: true,
+      skipped: true,
+      reason: 'No eligible topic available after duplicate and angle checks',
+      preferredCategory,
+    }
+  }
+
+  const { category, seedTopic, plan } = candidate
+  const internalLinks = await fetchInternalLinks(category)
+  const outline = await generateOutline(category, plan, internalLinks)
+  const article = await generateArticle(category, plan, outline, internalLinks)
+  const slug = buildSlug(article.title)
+
+  if (await slugExists(slug)) {
+    if (queueItem) {
+      await updateQueueStatus(queueItem.id, 'skipped', { duplicate_slug: slug }, 'Duplicate slug after article generation')
+    }
+    return {
+      success: true,
+      skipped: true,
+      reason: 'Duplicate slug after article generation',
+      preferredCategory,
+      selectedCategory: category,
+      seedTopic,
+      slug,
+      title: article.title,
+    }
+  }
+
+  if (await hasSimilarRecentTitle(article.title)) {
+    if (queueItem) {
+      await updateQueueStatus(queueItem.id, 'skipped', { title: article.title }, 'Similar title already exists in recent posts')
+    }
+    return {
+      success: true,
+      skipped: true,
+      reason: 'Similar title already exists in recent posts',
+      preferredCategory,
+      selectedCategory: category,
+      seedTopic,
+      slug,
+      title: article.title,
+    }
+  }
+
+  const coverUrl = pickStockCoverByCategory(category, `${category}-${seedTopic}-${plan.primaryKeyword}`)
+  const created = await createDraftPost(article, category, coverUrl, plan, outline)
+
+  if (queueItem) {
+    await updateQueueStatus(queueItem.id, 'completed', {
+      post_id: created.id,
+      post_slug: created.slug,
+      post_title: created.title,
+      primary_keyword: outline.primaryKeyword,
+      related_keywords: outline.relatedKeywords,
+    })
+  }
+
+  return {
+    success: true,
+    created: true,
+    post: {
+      id: created.id,
+      title: created.title,
+      slug: created.slug,
+      category: created.category,
+      published: created.published,
+      cover_url: created.cover_url,
+      status: created.status,
+      quality_score: created.quality_score,
+    },
+    strategy: {
+      preferredCategory,
+      selectedCategory: category,
+      seedTopic,
+      primaryKeyword: outline.primaryKeyword,
+      relatedKeywords: outline.relatedKeywords,
+      searchIntent: outline.searchIntent,
+      angle: plan.angle,
+      source: queueItem ? 'keyword_queue' : 'topic_bank',
+    },
+  }
 }
 
 async function pickCandidateForToday(now: Date): Promise<CandidateSelection | null> {
@@ -920,102 +1124,57 @@ async function pickCandidateForToday(now: Date): Promise<CandidateSelection | nu
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   const expected = process.env.CRON_SECRET
+  const isCron = Boolean(expected) && authHeader === `Bearer ${expected}`
+  const isAdmin = req.headers.get('x-admin-key') === process.env.ADMIN_PASSWORD
 
-  if (!expected) {
-    return jsonError('Missing CRON_SECRET environment variable.')
-  }
-
-  if (authHeader !== `Bearer ${expected}`) {
+  if (!isCron && !isAdmin) {
     return jsonError('Unauthorized', 401)
   }
 
   try {
+    const { searchParams } = new URL(req.url)
+    const count = Math.min(Math.max(Number(searchParams.get('count') ?? '1'), 1), 5)
+    const keywordId = searchParams.get('keywordId')
     const now = new Date()
-    const preferredCategory = getCategoryForToday(now)
-    const candidate = await pickCandidateForToday(now)
+    const claimedKeyword = keywordId ? await claimSpecificQueuedKeyword(keywordId) : null
+    const queuedItems = keywordId
+      ? (claimedKeyword ? [claimedKeyword] : [])
+      : await claimQueuedKeywords(count)
+    const results: any[] = []
 
-    if (!candidate) {
-      return NextResponse.json({
-        success: true,
-        skipped: true,
-        reason: 'No eligible topic available after duplicate and angle checks',
-        preferredCategory,
-      })
+    for (const queueItem of queuedItems) {
+      try {
+        results.push(await runDraftGeneration(now, queueItem))
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown queue processing error'
+        await updateQueueStatus(queueItem.id, 'failed', {}, message)
+        results.push({ success: false, created: false, queueId: queueItem.id, error: message })
+      }
     }
 
-    const { category, seedTopic, plan } = candidate
-    const internalLinks = await fetchInternalLinks(category)
-    const outline = await generateOutline(category, plan, internalLinks)
-    const article = await generateArticle(category, plan, outline, internalLinks)
-    const slug = buildSlug(article.title)
-
-    if (await slugExists(slug)) {
-      return NextResponse.json({
-        success: true,
-        skipped: true,
-        reason: 'Duplicate slug after article generation',
-        preferredCategory,
-        selectedCategory: category,
-        seedTopic,
-        slug,
-        title: article.title,
-      })
+    while (!keywordId && results.length < count) {
+      results.push(await runDraftGeneration(now))
+      if (count === 1) break
+      if (results[results.length - 1]?.skipped) break
     }
 
-    if (await hasSimilarRecentTitle(article.title)) {
-      return NextResponse.json({
-        success: true,
-        skipped: true,
-        reason: 'Similar title already exists in recent posts',
-        preferredCategory,
-        selectedCategory: category,
-        seedTopic,
-        slug,
-        title: article.title,
-      })
+    if (keywordId && queuedItems.length === 0) {
+      return jsonError('Keyword is no longer queued or was already processed', 409)
     }
 
-    const coverUrl = pickStockCoverByCategory(
-      category,
-      `${category}-${seedTopic}-${plan.primaryKeyword}`
-    )
-
-    console.log('daily-draft selected candidate', {
-      preferredCategory,
-      selectedCategory: category,
-      seedTopic,
-      primaryKeyword: plan.primaryKeyword,
-      angle: plan.angle,
-      coverUrl,
-    })
-
-    const created = await createDraftPost(article, category, coverUrl)
+    if (results.length === 1) {
+      return NextResponse.json(results[0])
+    }
 
     return NextResponse.json({
       success: true,
-      created: true,
-      post: {
-        id: created.id,
-        title: created.title,
-        slug: created.slug,
-        category: created.category,
-        published: created.published,
-        cover_url: created.cover_url,
-      },
-      strategy: {
-        preferredCategory,
-        selectedCategory: category,
-        seedTopic,
-        primaryKeyword: outline.primaryKeyword,
-        relatedKeywords: outline.relatedKeywords,
-        searchIntent: outline.searchIntent,
-        angle: plan.angle,
-      },
+      count: results.length,
+      createdCount: results.filter((item) => item.created).length,
+      results,
     })
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown error creating SEO draft'
-
+    const message = error instanceof Error ? error.message : 'Unknown error creating SEO draft'
     return jsonError(message, 500)
   }
 }
+
