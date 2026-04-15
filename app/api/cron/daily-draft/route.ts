@@ -1067,11 +1067,22 @@ async function createDraftPost(
 
 async function claimSpecificQueuedKeyword(keywordId: string): Promise<QueueRow | null> {
   const supabase = createAdminClient()
+  const now = new Date().toISOString()
+  const { data: existing, error: lookupError } = await supabase
+    .from('keyword_queue')
+    .select('id, keyword, category, intent, brief, status')
+    .eq('id', keywordId)
+    .maybeSingle()
+
+  if (lookupError) throw new Error(lookupError.message)
+  if (!existing) return null
+  if (!['queued', 'failed'].includes(String((existing as any).status ?? '').toLowerCase())) return null
+
   const { data: updated, error } = await supabase
     .from('keyword_queue')
-    .update({ status: 'processing', updated_at: new Date().toISOString() })
+    .update({ status: 'processing', updated_at: now, notes: null })
     .eq('id', keywordId)
-    .eq('status', 'queued')
+    .eq('status', (existing as any).status)
     .select('id, keyword, category, intent, brief')
     .maybeSingle()
 

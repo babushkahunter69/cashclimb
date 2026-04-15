@@ -52,7 +52,9 @@ export default function KeywordRowActions({ keywordId, keyword, status }: Props)
     }
   }
 
-  const isDisabled = busy || status !== 'queued'
+  const normalizedStatus = String(status).toLowerCase()
+  const canGenerate = normalizedStatus === 'queued' || normalizedStatus === 'failed'
+  const isDisabled = busy || !canGenerate
 
   return (
     <button
@@ -61,7 +63,7 @@ export default function KeywordRowActions({ keywordId, keyword, status }: Props)
       disabled={isDisabled}
       className="rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-[#F0EDE8] hover:border-gold disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {busy ? 'Drafting…' : 'Generate draft'}
+      {busy ? 'Drafting…' : normalizedStatus === 'failed' ? 'Retry draft' : 'Generate draft'}
     </button>
   )
 }
