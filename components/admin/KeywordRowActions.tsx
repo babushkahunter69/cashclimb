@@ -4,20 +4,28 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 
-function getAdminKey() {
-  if (typeof window === 'undefined') return ''
-  return sessionStorage.getItem('cc-admin-key') ?? ''
-}
-
 async function authedFetch(path: string, init: RequestInit = {}) {
-  const adminKey = getAdminKey()
-  if (!adminKey) throw new Error('Session expired. Please log in again.')
   const headers = new Headers(init.headers)
-  headers.set('x-admin-key', adminKey)
-  if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
-  const response = await fetch(path, { ...init, headers })
+  if (init.body && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json')
+  }
+
+  const response = await fetch(path, {
+    ...init,
+    headers,
+    credentials: 'include',
+  })
+
   const payload = await response.json().catch(() => null)
-  if (!response.ok) throw new Error(payload?.error || 'Request failed')
+
+  if (response.status === 401) {
+    throw new Error('Session expired. Please log in again.')
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.message || 'Request failed')
+  }
+
   return payload
 }
 
@@ -34,19 +42,28 @@ export default function KeywordRowActions({ keywordId, keyword, status }: Props)
   async function handleGenerateDraft() {
     setBusy(true)
     try {
-      const result = await authedFetch(`/api/cron/daily-draft?keywordId=${encodeURIComponent(keywordId)}`, { method: 'GET' })
+      const result = await authedFetch(
+        `/api/cron/daily-draft?keywordId=${encodeURIComponent(keywordId)}`,
+        { method: 'GET' }
+      )
+
       if (result?.created && result?.post?.id) {
         toast.success(`Draft created for “${keyword}”.`)
       } else if (result?.skipped) {
         toast(result.reason || 'Keyword was skipped.')
+      } else if (result?.error) {
+        toast.error(result.error)
       } else {
         toast.success('Draft generation finished.')
       }
+
       router.refresh()
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to generate draft.'
       toast.error(message)
-      if (/session expired/i.test(message)) window.location.href = '/admin/login'
+      if (/session expired/i.test(message)) {
+        window.location.href = `/admin/login?from=${encodeURIComponent('/admin/keywords')}`
+      }
     } finally {
       setBusy(false)
     }

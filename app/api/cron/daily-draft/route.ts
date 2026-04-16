@@ -1279,7 +1279,12 @@ export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
   const expected = process.env.CRON_SECRET
   const isCron = Boolean(expected) && authHeader === `Bearer ${expected}`
-  const isAdmin = req.headers.get('x-admin-key') === process.env.ADMIN_PASSWORD
+  const adminPassword = process.env.ADMIN_PASSWORD
+  const cookieAdmin = req.cookies.get('cc-admin-token')?.value
+  const headerAdmin = req.headers.get('x-admin-key')
+  const isAdmin =
+  Boolean(adminPassword) &&
+  (cookieAdmin === adminPassword || headerAdmin === adminPassword)
 
   if (!isCron && !isAdmin) {
     return jsonError('Unauthorized', 401)

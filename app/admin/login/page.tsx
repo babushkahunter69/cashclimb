@@ -1,4 +1,5 @@
 'use client'
+
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -6,7 +7,12 @@ import toast from 'react-hot-toast'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const from = searchParams.get('from') ?? '/admin'
+  const requestedFrom = searchParams.get('from')
+  const from =
+    requestedFrom && requestedFrom.startsWith('/admin')
+      ? requestedFrom
+      : '/admin/keywords'
+
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -23,10 +29,8 @@ function LoginForm() {
 
       if (!res.ok) throw new Error('Invalid password')
 
-      sessionStorage.setItem('cc-admin-key', password)
-
       toast.success('Welcome back!')
-      router.push(from)
+      router.replace(from)
       router.refresh()
     } catch {
       toast.error('Invalid password. Try again.')

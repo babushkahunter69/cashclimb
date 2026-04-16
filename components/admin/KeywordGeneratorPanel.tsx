@@ -11,20 +11,28 @@ const marketOptions = ['US', 'US / Canada / UK / Australia']
 const riskOptions = ['Low', 'Medium']
 const countOptions = [10, 20, 30]
 
-function getAdminKey() {
-  if (typeof window === 'undefined') return ''
-  return sessionStorage.getItem('cc-admin-key') ?? ''
-}
-
 async function authedFetch(path: string, init: RequestInit = {}) {
-  const adminKey = getAdminKey()
-  if (!adminKey) throw new Error('Session expired. Please log in again.')
   const headers = new Headers(init.headers)
-  headers.set('x-admin-key', adminKey)
-  if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
-  const response = await fetch(path, { ...init, headers })
+  if (init.body && !headers.has('content-type')) {
+    headers.set('content-type', 'application/json')
+  }
+
+  const response = await fetch(path, {
+    ...init,
+    headers,
+    credentials: 'include',
+  })
+
   const payload = await response.json().catch(() => null)
-  if (!response.ok) throw new Error(payload?.error || 'Request failed')
+
+  if (response.status === 401) {
+    throw new Error('Session expired. Please log in again.')
+  }
+
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.message || 'Request failed')
+  }
+
   return payload
 }
 
@@ -51,7 +59,9 @@ export default function KeywordGeneratorPanel() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to generate keywords.'
       toast.error(message)
-      if (/session expired/i.test(message)) window.location.href = '/admin/login'
+      if (/session expired/i.test(message)) {
+        window.location.href = `/admin/login?from=${encodeURIComponent('/admin/keywords')}`
+      }
     } finally {
       setBusy(null)
     }
@@ -64,10 +74,19 @@ export default function KeywordGeneratorPanel() {
       const created = Array.isArray(result.results)
         ? result.results.filter((item: any) => item.created).length
         : result.created ? 1 : 0
-      toast.success(created > 0 ? `Created ${created} draft article${created === 1 ? '' : 's'}.` : 'No draft created this run.')
+
+      toast.success(
+        created > 0
+          ? `Created ${created} draft article${created === 1 ? '' : 's'}.`
+          : result?.reason || 'No draft created this run.'
+      )
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create drafts.')
+      const message = error instanceof Error ? error.message : 'Failed to create drafts.'
+      toast.error(message)
+      if (/session expired/i.test(message)) {
+        window.location.href = `/admin/login?from=${encodeURIComponent('/admin/keywords')}`
+      }
     } finally {
       setBusy(null)
     }
