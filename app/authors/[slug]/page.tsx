@@ -36,12 +36,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         : `${author.name} | CashClimb Author`,
     description: author.intro,
     alternates: {
-      canonical: `https://cashclimb.com/authors/${author.slug}`,
+      canonical: `https://cashclimb.org/authors/${author.slug}`,
     },
     openGraph: {
       title: author.name,
       description: author.tagline,
-      url: `https://cashclimb.com/authors/${author.slug}`,
+      url: `https://cashclimb.org/authors/${author.slug}`,
       type: 'profile',
     },
   }
@@ -68,7 +68,7 @@ export default async function AuthorPage({ params }: Props) {
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: author.name,
-          url: `https://cashclimb.com/authors/${author.slug}`,
+          url: `https://cashclimb.org/authors/${author.slug}`,
           description: author.intro,
           parentOrganization: {
             '@type': 'Organization',
@@ -79,7 +79,7 @@ export default async function AuthorPage({ params }: Props) {
           '@context': 'https://schema.org',
           '@type': 'Person',
           name: author.name,
-          url: `https://cashclimb.com/authors/${author.slug}`,
+          url: `https://cashclimb.org/authors/${author.slug}`,
           jobTitle: author.role,
           worksFor: {
             '@type': 'Organization',
