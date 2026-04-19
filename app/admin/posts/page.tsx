@@ -139,10 +139,17 @@ function PostsTable({
 
                   <EditorialActionButtons
                     postId={p.id}
-                    status={p.status}
-                    published={p.published}
-                    compact
-                  />
+                    status={
+                    p.status === 'approved' ||
+                    p.status === 'published' ||
+                    p.status === 'review_required' ||
+                    p.status === 'rejected'
+                      ? p.status
+                      : undefined
+                  }
+                  published={p.published}
+                  compact
+                />
 
                   <DeletePostButton postId={p.id} />
                 </div>
