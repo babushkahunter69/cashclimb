@@ -3,40 +3,9 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import type { WorkflowStatus } from '@/types'
+import { authedFetch } from './authedFetch'
 
-function getAdminKey(): string {
-  if (typeof window === 'undefined') return ''
-  return sessionStorage.getItem('cc-admin-key') ?? ''
-}
-
-async function requestWithAdmin(path: string, init: RequestInit = {}) {
-  const adminKey = getAdminKey()
-
-  if (!adminKey) {
-    throw new Error('Session expired. Please log in again.')
-  }
-
-  const headers = new Headers(init.headers)
-  headers.set('x-admin-key', adminKey)
-
-  if (init.body && !headers.has('content-type')) {
-    headers.set('content-type', 'application/json')
-  }
-
-  const response = await fetch(path, {
-    ...init,
-    headers,
-  })
-
-  const payload = await response.json().catch(() => null)
-
-  if (!response.ok) {
-    throw new Error(payload?.error || 'Request failed')
-  }
-
-  return payload
-}
+type WorkflowStatus = 'draft_ready' | 'review_required' | 'approved' | 'published' | 'rejected' | null
 
 export default function EditorialActionButtons({
   postId,
@@ -67,7 +36,7 @@ export default function EditorialActionButtons({
   async function handleRunChecks() {
     setBusyAction('checks')
     try {
-      const result = await requestWithAdmin(`/api/admin/quality-checks/${postId}`, {
+      const result = await authedFetch(`/api/admin/quality-checks/${postId}`, {
         method: 'POST',
       })
       toast.success(`Quality check complete. Score: ${result?.evaluation?.score ?? '—'}`)
@@ -90,7 +59,7 @@ export default function EditorialActionButtons({
 
     setBusyAction('approve')
     try {
-      await requestWithAdmin('/api/admin/articles/approve', {
+      await authedFetch('/api/admin/articles/approve', {
         method: 'POST',
         body: JSON.stringify({ postId, notes: notes.trim() || null }),
       })
@@ -99,6 +68,9 @@ export default function EditorialActionButtons({
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to approve post.'
       toast.error(message)
+      if (/session expired/i.test(message) && typeof window !== 'undefined') {
+        window.location.href = '/admin/login'
+      }
     } finally {
       setBusyAction(null)
     }
@@ -115,7 +87,7 @@ export default function EditorialActionButtons({
 
     setBusyAction('publish')
     try {
-      await requestWithAdmin('/api/admin/articles/publish', {
+      await authedFetch('/api/admin/articles/publish', {
         method: 'POST',
         body: JSON.stringify({ postId, notes: notes.trim() || null }),
       })
@@ -124,6 +96,9 @@ export default function EditorialActionButtons({
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to publish post.'
       toast.error(message)
+      if (/session expired/i.test(message) && typeof window !== 'undefined') {
+        window.location.href = '/admin/login'
+      }
     } finally {
       setBusyAction(null)
     }

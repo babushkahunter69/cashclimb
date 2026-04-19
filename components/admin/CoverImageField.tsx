@@ -10,11 +10,6 @@ type CoverImageFieldProps = {
   title?: string
 }
 
-function getAdminKey(): string {
-  if (typeof window === 'undefined') return ''
-  return sessionStorage.getItem('cc-admin-key') ?? ''
-}
-
 export default function CoverImageField({
   name = 'cover_url',
   initialUrl = '',
@@ -29,13 +24,6 @@ export default function CoverImageField({
     const file = e.target.files?.[0]
     if (!file) return
 
-    const adminKey = getAdminKey()
-    if (!adminKey) {
-      toast.error('Session expired. Please log in again.')
-      window.location.href = '/admin/login'
-      return
-    }
-
     setUploading(true)
     try {
       const fd = new FormData()
@@ -43,18 +31,23 @@ export default function CoverImageField({
 
       const res = await fetch('/api/upload', {
         method: 'POST',
-        headers: { 'x-admin-key': adminKey },
         body: fd,
+        credentials: 'include',
       })
 
       const data = await res.json()
+      if (res.status === 401) throw new Error('Session expired. Please log in again.')
       if (!res.ok) throw new Error(data.error || 'Upload failed')
 
       setCoverUrl(data.url)
       setPreviewUrl(data.url)
       toast.success('Cover image uploaded!')
     } catch (err: any) {
-      toast.error(err.message ?? 'Upload failed')
+      const message = err?.message ?? 'Upload failed'
+      toast.error(message)
+      if (/session expired/i.test(message) && typeof window !== 'undefined') {
+        window.location.href = '/admin/login'
+      }
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''

@@ -174,6 +174,61 @@ const DEFAULT_STOCK_COVERS: Record<Category, string[]> = {
   ],
 }
 
+
+const PROCESSING_STALE_MINUTES = 15
+const DRAFT_TIMEOUT_MS = 4 * 60 * 1000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)}s`)), ms)
+    promise
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
+
+async function recoverStaleProcessingKeywords() {
+  const supabase = createAdminClient()
+  const cutoff = new Date(Date.now() - PROCESSING_STALE_MINUTES * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('keyword_queue')
+    .select('id, keyword, updated_at, notes')
+    .eq('status', 'processing')
+    .lt('updated_at', cutoff)
+    .limit(50)
+
+  if (error) throw new Error(error.message)
+  if (!data?.length) return 0
+
+  for (const row of data as any[]) {
+    const staleNote = [row.notes, `Auto-recovered stale processing job at ${new Date().toISOString()}`]
+      .filter(Boolean)
+      .join(' | ')
+      .slice(0, 1000)
+
+    const { error: updateError } = await supabase
+      .from('keyword_queue')
+      .update({
+        status: 'failed',
+        updated_at: new Date().toISOString(),
+        processed_at: new Date().toISOString(),
+        notes: staleNote,
+      })
+      .eq('id', row.id)
+      .eq('status', 'processing')
+
+    if (updateError) throw new Error(updateError.message)
+  }
+
+  return data.length
+}
+
 const STOPWORDS = new Set([
   'a',
   'an',
@@ -1066,6 +1121,7 @@ async function createDraftPost(
 
 
 async function claimSpecificQueuedKeyword(keywordId: string): Promise<QueueRow | null> {
+  await recoverStaleProcessingKeywords()
   const supabase = createAdminClient()
   const now = new Date().toISOString()
   const { data: existing, error: lookupError } = await supabase
@@ -1091,6 +1147,7 @@ async function claimSpecificQueuedKeyword(keywordId: string): Promise<QueueRow |
 }
 
 async function claimQueuedKeywords(limit: number): Promise<QueueRow[]> {
+  await recoverStaleProcessingKeywords()
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('keyword_queue')
@@ -1303,7 +1360,7 @@ export async function GET(req: NextRequest) {
 
     for (const queueItem of queuedItems) {
       try {
-        results.push(await runDraftGeneration(now, queueItem))
+        results.push(await withTimeout(runDraftGeneration(now, queueItem), DRAFT_TIMEOUT_MS, `Draft generation for ${queueItem.keyword}`))
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown queue processing error'
         await updateQueueStatus(queueItem.id, 'failed', {}, message)
@@ -1312,7 +1369,7 @@ export async function GET(req: NextRequest) {
     }
 
     while (!keywordId && results.length < count) {
-      results.push(await runDraftGeneration(now))
+      results.push(await withTimeout(runDraftGeneration(now), DRAFT_TIMEOUT_MS, 'Draft generation'))
       if (count === 1) break
       if (results[results.length - 1]?.skipped) break
     }

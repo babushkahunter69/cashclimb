@@ -3,36 +3,26 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-
-function getAdminKey() {
-  if (typeof window === 'undefined') return ''
-  return sessionStorage.getItem('cc-admin-key') ?? ''
-}
+import { authedFetch } from './authedFetch'
 
 export default function HumanizeButton({ postId }: { postId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
-    const adminKey = getAdminKey()
-    if (!adminKey) {
-      toast.error('Session expired. Please log in again.')
-      window.location.href = '/admin/login'
-      return
-    }
-
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/posts/${postId}/humanize`, {
+      await authedFetch(`/api/admin/posts/${postId}/humanize`, {
         method: 'POST',
-        headers: { 'x-admin-key': adminKey },
       })
-      const payload = await response.json().catch(() => null)
-      if (!response.ok) throw new Error(payload?.error || 'Failed to humanize article.')
       toast.success('Article humanized and rescored.')
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to humanize article.')
+      const message = error instanceof Error ? error.message : 'Failed to humanize article.'
+      toast.error(message)
+      if (/session expired/i.test(message) && typeof window !== 'undefined') {
+        window.location.href = '/admin/login'
+      }
     } finally {
       setLoading(false)
     }
