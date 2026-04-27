@@ -1142,8 +1142,14 @@ async function createDraftPost(
   outline: ArticleOutline
 ) {
   const supabase = createAdminClient()
+
+  // 🔑 Build slug safely
   const slug = buildSlug(article.title)
+
+  // ⏱️ Read time
   const readTime = readingTime(stripHtml(article.contentHtml)).text
+
+  // 🧠 Evaluate article quality + risk
   const evaluation = evaluateFinanceArticle({
     title: article.title,
     excerpt: article.excerpt,
@@ -1154,8 +1160,19 @@ async function createDraftPost(
     seoDescription: article.seoDescription,
     coverUrl,
   })
-  const status = nextStatusFromEvaluation(evaluation)
 
+  // 🚨 STRICT auto-publish logic
+  const isSafeToAutoPublish =
+    evaluation.passed === true &&
+    evaluation.score >= 85 &&
+    evaluation.risk_level === 'low'
+
+  // 📌 Status logic
+  const status = isSafeToAutoPublish
+    ? 'published'
+    : nextStatusFromEvaluation(evaluation)
+
+  // 🧱 Build payload
   const payload: Record<string, any> = {
     title: article.title,
     slug,
@@ -1164,13 +1181,17 @@ async function createDraftPost(
     category,
     author: article.author,
     cover_url: coverUrl,
+
     seo_title: article.seoTitle,
     seo_description: article.seoDescription,
+
     primary_keyword: outline.primaryKeyword,
     related_keywords: outline.relatedKeywords,
+
     quality_score: evaluation.score,
     risk_level: evaluation.risk_level,
     status,
+
     workflow_meta: {
       angle: plan.angle,
       audience: plan.audience,
@@ -1178,33 +1199,61 @@ async function createDraftPost(
       seedKeyword: plan.primaryKeyword,
       externalSources: outline.externalSources,
       humanized: true,
-      internalLinkTargets: internalLinksSummary(article.contentHtml),
+      autoPublished: isSafeToAutoPublish,
+      autoPublishReason: isSafeToAutoPublish
+        ? 'Passed quality checks (score ≥ 85, low risk)'
+        : 'Held for review (did not meet auto-publish threshold)',
     },
-    published: false,
+
+    // 🚀 THIS is what controls visibility on site
+    published: isSafeToAutoPublish,
+    published_at: isSafeToAutoPublish
+      ? new Date().toISOString()
+      : null,
+
     read_time: readTime,
+    updated_at: new Date().toISOString(),
   }
 
-  const { data, error } = await supabase.from('posts').insert(payload).select().single()
+  // 💾 Insert post
+  const { data, error } = await supabase
+    .from('posts')
+    .insert(payload)
+    .select()
+    .single()
 
   if (error) {
     throw new Error(error.message)
   }
 
-  const { error: qualityError } = await supabase.from('quality_checks').insert({
-    post_id: data.id,
-    score: evaluation.score,
-    passed: evaluation.passed,
-    risk_level: evaluation.risk_level,
-    checks: evaluation.checks,
-  })
+  // 📊 Save quality check
+  const { error: qualityError } = await supabase
+    .from('quality_checks')
+    .insert({
+      post_id: data.id,
+      score: evaluation.score,
+      passed: evaluation.passed,
+      risk_level: evaluation.risk_level,
+      checks: evaluation.checks,
+    })
 
   if (qualityError) {
     throw new Error(qualityError.message)
   }
 
+  // 🧹 OPTIONAL: mark keyword as completed
+  if (plan?.primaryKeyword) {
+    await supabase
+      .from('keyword_queue')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString(),
+      })
+      .ilike('keyword', plan.primaryKeyword)
+  }
+
   return data
 }
-
 
 async function claimSpecificQueuedKeyword(keywordId: string): Promise<QueueRow | null> {
   await recoverStaleProcessingKeywords()
