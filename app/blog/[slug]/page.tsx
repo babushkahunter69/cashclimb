@@ -1,90 +1,17 @@
-import { createAdminClient } from '@/lib/supabase-server'
-import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
-import Comments from '@/components/Comments'
-import PostCard from '@/components/PostCard'
-import ViewTracker from '@/components/ViewTracker'
+import { createAdminClient } from '@/lib/supabase-server'
 import { getAuthorByName } from '@/lib/authors'
-import type { Post, Comment } from '@/types'
+import type { Post } from '@/types'
 
-export const revalidate = 60
+const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
 
-const CAT_COLORS: Record<string, string> = {
-  Investing: '#D4AF37',
-  'Personal Finance': '#4A9B8E',
-  Credit: '#C4704A',
-  Taxes: '#7B68D4',
-  'Real Estate': '#5A8C5A',
-  Retirement: '#C46A8A',
-}
-
-interface Props {
-  params: { slug: string }
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const supabase = createAdminClient()
-  const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
-
-  const { data } = await supabase
-    .from('posts')
-    .select('slug, title, excerpt, cover_url, seo_title, seo_description, created_at, updated_at, published')
-    .eq('slug', params.slug)
-    .eq('published', true)
-    .maybeSingle()
-
-  if (!data) return {}
-
-  const metaTitle = data.seo_title || data.title
-  const metaDescription = data.seo_description || data.excerpt
-  const canonicalUrl = `${siteUrl}/blog/${data.slug}`
-  const socialImage = data.cover_url || `${siteUrl}/opengraph-image`
-
-  return {
-    title: metaTitle,
-    description: metaDescription,
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title: metaTitle,
-      description: metaDescription,
-      url: canonicalUrl,
-      images: [{ url: socialImage }],
-      type: 'article',
-      publishedTime: data.created_at || undefined,
-      modifiedTime: data.updated_at || data.created_at || undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: metaTitle,
-      description: metaDescription,
-      images: [socialImage],
-    },
-  }
-}
-
-export async function generateStaticParams() {
-  const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('posts')
-    .select('slug')
-    .eq('published', true)
-
-  return data?.map((p) => ({ slug: p.slug })) ?? []
-}
-
-function cleanPostBody(html: string): string {
-  return html
-    .replace(/rel="noopener noreferrer nofollow"/g, 'target="_blank" rel="noopener noreferrer"')
-    .replace(/rel="noreferrer nofollow"/g, 'target="_blank" rel="noopener noreferrer"')
-    .replace(/rel="nofollow"/g, '')
-}
-
-function formatDate(date: string) {
+function formatDate(date?: string) {
+  if (!date) return ''
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -92,35 +19,23 @@ function formatDate(date: string) {
   })
 }
 
-export default async function PostPage({ params }: Props) {
+async function getPost(slug: string) {
   const supabase = createAdminClient()
 
-  const [postRes, commentsRes] = await Promise.all([
-    supabase
-      .from('posts')
-      .select('*')
-      .eq('slug', params.slug)
-      .eq('published', true)
-      .single(),
-    supabase
-      .from('comments')
-      .select('*')
-      .eq('approved', true)
-      .order('created_at', { ascending: true }),
-  ])
+  const { data } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('slug', slug)
+    .eq('published', true)
+    .maybeSingle()
 
-  if (!postRes.data) notFound()
+  return data as Post | null
+}
 
-  const post: Post = postRes.data
-  const color = CAT_COLORS[post.category] ?? '#888'
+async function getRelatedPosts(post: Post) {
+  const supabase = createAdminClient()
 
-  const comments: Comment[] = (commentsRes.data ?? []).filter(
-    (comment: any) => comment.post_id === post.id
-  )
-
-  const author = getAuthorByName(post.author)
-
-  const { data: related } = await supabase
+  const { data } = await supabase
     .from('posts')
     .select('*')
     .eq('published', true)
@@ -129,205 +44,297 @@ export default async function PostPage({ params }: Props) {
     .order('created_at', { ascending: false })
     .limit(3)
 
+  return (data ?? []) as Post[]
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string }
+}): Promise<Metadata> {
+  const post = await getPost(params.slug)
+
+  if (!post) return {}
+
+  const url = `${siteUrl}/blog/${post.slug}`
+  const image = post.cover_url || `${siteUrl}/opengraph-image`
+
+  return {
+    title: `${post.title} | CashClimb`,
+    description: post.excerpt,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url,
+      type: 'article',
+      images: [{ url: image }],
+      publishedTime: post.created_at,
+      modifiedTime: post.updated_at,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: [image],
+    },
+  }
+}
+
+export default async function BlogPostPage({
+  params,
+}: {
+  params: { slug: string }
+}) {
+  const post = await getPost(params.slug)
+
+  if (!post) notFound()
+
+  const author = getAuthorByName(post.author)
+  const relatedPosts = await getRelatedPosts(post)
+  const articleUrl = `${siteUrl}/blog/${post.slug}`
+  const image = post.cover_url || `${siteUrl}/opengraph-image`
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    image,
+    datePublished: post.created_at,
+    dateModified: post.updated_at || post.created_at,
+    author: {
+      '@type': author.schemaType,
+      name: author.name,
+      url: `${siteUrl}/authors/${author.slug}`,
+      description: author.intro,
+      knowsAbout: author.topics,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'CashClimb',
+      url: siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/opengraph-image`,
+      },
+    },
+    mainEntityOfPage: articleUrl,
+  }
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `Is ${post.title} financial advice?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'No. CashClimb content is for informational and educational purposes only and should not be treated as personal financial advice.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Who reviews CashClimb content?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'CashClimb articles are created and reviewed by the editorial team for clarity, usefulness, and responsible personal finance guidance.',
+        },
+      },
+    ],
+  }
+
   return (
     <>
       <Navbar />
-      <ViewTracker postId={post.id} path={`/blog/${post.slug}`} />
 
-      <main>
-        <div className="max-w-3xl mx-auto px-6 pt-12 pb-0">
-          <Link
-            href="/blog"
-            className="text-[#9A9490] text-sm hover:text-gold transition-colors inline-flex items-center gap-2 mb-8"
-          >
-            ← Back to Articles
-          </Link>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
 
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span
-              className="cat-badge"
-              style={{ background: `${color}22`, color }}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
+      <main className="max-w-6xl mx-auto px-6 py-12">
+        <article className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
+          <div>
+            <div className="mb-8">
+              <Link
+                href="/blog"
+                className="text-sm text-gold font-semibold hover:opacity-80"
+              >
+                ← Back to articles
+              </Link>
+
+              <div className="mt-6 flex flex-wrap items-center gap-3 text-xs uppercase tracking-widest font-bold text-[#9A9490]">
+                <span className="text-gold">{post.category}</span>
+                <span>{formatDate(post.updated_at || post.created_at)}</span>
+                <span>{post.read_time}</span>
+              </div>
+
+              <h1 className="font-serif text-4xl md:text-5xl font-black leading-tight mt-4 text-[#F0EDE8]">
+                {post.title}
+              </h1>
+
+              <p className="text-[#B7B0AA] text-lg leading-relaxed mt-5 max-w-3xl">
+                {post.excerpt}
+              </p>
+            </div>
+
+            <Link
+              href={`/authors/${author.slug}`}
+              className="mb-8 block rounded-2xl border border-border bg-bg-2 p-5 hover:border-gold transition-colors"
             >
-              {post.category}
-            </span>
-            <span className="cat-badge bg-[#1A1A1A] text-[#F0EDE8]">
-              Reviewed
-            </span>
-          </div>
-
-          <h1 className="font-serif text-4xl lg:text-5xl font-black leading-[1.1] mb-6">
-            {post.title}
-          </h1>
-
-          {post.excerpt && (
-            <p className="text-lg text-[#B8B1AC] leading-relaxed mb-8">
-              {post.excerpt}
-            </p>
-          )}
-
-          <div className="bg-bg-2 border border-border rounded-2xl p-6 mb-8">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold tracking-wide flex-shrink-0">
-                {author.initials}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
-                  <Link
-                    href={`/authors/${author.slug}`}
-                    className="text-[#F0EDE8] font-semibold hover:text-gold transition-colors"
-                  >
-                    {author.name}
-                  </Link>
-
-                  <div className="text-sm text-gold">
-                    {author.role}
-                  </div>
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold">
+                  {author.initials}
                 </div>
 
-                <p className="text-sm text-[#9A9490] leading-relaxed mb-4">
-                  {author.intro}
-                </p>
-
-                <div className="grid sm:grid-cols-3 gap-3 text-sm">
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Last updated</div>
-                    <div className="text-[#F0EDE8] font-semibold">
-                      {formatDate(post.updated_at || post.created_at)}
-                    </div>
-                  </div>
-
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Reading time</div>
-                    <div className="text-gold font-semibold">
-                      {post.read_time}
-                    </div>
-                  </div>
-
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Reviewed by</div>
-                    <div className="text-[#F0EDE8] font-semibold">
-                      CashClimb Editorial
-                    </div>
-                  </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gold font-bold">
+                    Written by
+                  </p>
+                  <h2 className="text-[#F0EDE8] font-bold mt-1">{author.name}</h2>
+                  <p className="text-sm text-[#9A9490] mt-1">{author.role}</p>
+                  <p className="text-sm text-[#B7B0AA] leading-relaxed mt-2">
+                    {author.intro}
+                  </p>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </Link>
 
-        <div className="max-w-3xl mx-auto px-6">
-          {post.cover_url ? (
-            <div className="mb-10 overflow-hidden rounded-2xl border border-border bg-bg-2">
-              <img
-                src={post.cover_url}
-                alt={post.title}
-                className="block w-full h-auto max-h-[520px] object-cover"
-              />
-            </div>
-          ) : (
-            <div className="mb-10 h-64 rounded-2xl overflow-hidden bg-gradient-to-br from-[#0D1A14] to-[#1A1000] relative flex items-center justify-center">
-              <div
-                className="absolute inset-0 opacity-[0.08]"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(45deg,#D4AF37 0,#D4AF37 1px,transparent 0,transparent 50%)',
-                  backgroundSize: '14px 14px',
-                }}
-              />
-              <span className="font-serif text-[8rem] font-black text-gold opacity-[0.12] leading-none">
-                {post.title[0]}
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="max-w-3xl mx-auto px-6 py-10">
-          <div className="mb-8 bg-bg-2 border border-border rounded-2xl p-6">
-            <h2 className="font-serif text-xl font-bold mb-3 text-[#F0EDE8]">
-              What this article is for
-            </h2>
-            <p className="text-sm text-[#9A9490] leading-relaxed">
-              This guide is educational. It is designed to help readers
-              understand the topic, key tradeoffs, and practical next steps
-              before making important financial decisions.
-            </p>
-          </div>
-
-          <article
-            className="prose-cashclimb"
-            dangerouslySetInnerHTML={{ __html: cleanPostBody(post.body) }}
-          />
-
-          <div className="mt-10 bg-bg-2 border border-border rounded-2xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold tracking-wide flex-shrink-0">
-                {author.initials}
+            {post.cover_url ? (
+              <div className="relative aspect-[16/8] rounded-3xl overflow-hidden border border-border mb-10">
+                <Image
+                  src={post.cover_url}
+                  alt={post.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
               </div>
+            ) : null}
 
-              <div>
-                <p className="text-sm text-[#6A6460] mb-1">
-                  About the author
-                </p>
-
-                <h2 className="text-[#F0EDE8] font-semibold mb-1">
-                  <Link
-                    href={`/authors/${author.slug}`}
-                    className="hover:text-gold transition-colors"
-                  >
-                    {author.name}
-                  </Link>
-                </h2>
-
-                <p className="text-sm text-gold mb-3">
-                  {author.role}
-                </p>
-
-                <p className="text-sm text-[#9A9490] leading-relaxed mb-4">
-                  {author.intro}
-                </p>
-
-                <Link
-                  href={`/authors/${author.slug}`}
-                  className="text-sm font-semibold text-gold hover:opacity-80 transition-opacity"
-                >
-                  View author page
-                </Link>
-              </div>
+            <div className="rounded-2xl border border-border bg-bg-2 p-5 mb-8">
+              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+                Key takeaways
+              </p>
+              <ul className="space-y-2 text-sm text-[#D7D0CA] leading-relaxed">
+                <li>Use this guide as educational information, not personal financial advice.</li>
+                <li>Compare options carefully before making money decisions.</li>
+                <li>Focus on practical actions that match your income, goals, and risk level.</li>
+              </ul>
             </div>
-          </div>
 
-          <div className="mt-12 grid gap-4">
-            <div className="p-5 bg-bg-2 border border-border rounded-xl">
-              <p className="text-sm text-[#9A9490] leading-relaxed">
-                <strong className="text-[#F0EDE8]">Editorial note:</strong> CashClimb
-                aims to provide clear, plain-English financial education.
+            <div
+              className="prose-cashclimb"
+              dangerouslySetInnerHTML={{ __html: post.body }}
+            />
+
+            <div className="mt-10 rounded-2xl border border-border bg-bg-2 p-5">
+              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+                Financial disclaimer
+              </p>
+              <p className="text-sm text-[#B7B0AA] leading-relaxed">
+                This content is for informational and educational purposes only.
+                It does not constitute financial, investment, tax, or legal advice.
+                Always consider your personal situation and consult a qualified professional
+                before making financial decisions.
               </p>
             </div>
 
-            <div className="p-5 bg-bg-2 border border-border rounded-xl">
-              <p className="text-sm text-[#9A9490] leading-relaxed">
-                <strong className="text-[#F0EDE8]">Disclaimer:</strong> Informational only.
+            <div className="mt-10 rounded-2xl border border-border bg-bg-2 p-6">
+              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+                About the author
               </p>
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold">
+                  {author.initials}
+                </div>
+                <div>
+                  <h2 className="text-[#F0EDE8] font-bold">{author.name}</h2>
+                  <p className="text-sm text-[#9A9490]">{author.role}</p>
+                  <p className="text-sm text-[#B7B0AA] leading-relaxed mt-3">
+                    {author.bio.join(' ')}
+                  </p>
+                  <Link
+                    href={`/authors/${author.slug}`}
+                    className="inline-flex mt-4 text-sm text-gold font-semibold hover:opacity-80"
+                  >
+                    View author profile →
+                  </Link>
+                </div>
+              </div>
             </div>
+
+            {relatedPosts.length > 0 ? (
+              <section className="mt-12">
+                <p className="text-xs uppercase tracking-widest text-gold font-bold mb-4">
+                  Related guides
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {relatedPosts.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={`/blog/${item.slug}`}
+                      className="rounded-2xl border border-border bg-bg-2 p-5 hover:border-gold transition-colors"
+                    >
+                      <p className="text-xs text-gold font-bold mb-2">
+                        {item.category}
+                      </p>
+                      <h3 className="text-[#F0EDE8] font-bold leading-snug">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-[#9A9490] mt-3 line-clamp-3">
+                        {item.excerpt}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
 
-          <Comments postId={post.id} initial={comments} />
-        </div>
+          <aside className="space-y-5">
+            <div className="rounded-2xl border border-border bg-bg-2 p-5 sticky top-6">
+              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+                Article details
+              </p>
+              <div className="space-y-3 text-sm text-[#B7B0AA]">
+                <p>
+                  <strong className="text-[#F0EDE8]">Category:</strong> {post.category}
+                </p>
+                <p>
+                  <strong className="text-[#F0EDE8]">Updated:</strong>{' '}
+                  {formatDate(post.updated_at || post.created_at)}
+                </p>
+                <p>
+                  <strong className="text-[#F0EDE8]">Read time:</strong> {post.read_time}
+                </p>
+                <p>
+                  <strong className="text-[#F0EDE8]">Author:</strong> {author.name}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-bg-2 p-5">
+              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+                Editorial standard
+              </p>
+              <p className="text-sm text-[#B7B0AA] leading-relaxed">
+                CashClimb aims to publish clear, useful, beginner-friendly financial
+                education with responsible disclaimers and practical examples.
+              </p>
+            </div>
+          </aside>
+        </article>
       </main>
-
-      {related && related.length > 0 && (
-        <section className="max-w-7xl mx-auto px-6 pb-20">
-          <h2 className="font-serif text-2xl font-bold section-title mb-6">
-            More in {post.category}
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(related as Post[]).map((p) => (
-              <PostCard key={p.id} post={p} />
-            ))}
-          </div>
-        </section>
-      )}
 
       <Footer />
     </>
