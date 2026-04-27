@@ -832,18 +832,14 @@ function buildArticlePrompt(
       ? internalLinks
           .map(
             (link, index) =>
-              `${index + 1}. Title: "${link.title}" | URL: /blog/${link.slug} | Category: ${
-                link.category ?? 'General'
-              }`
+              `${index + 1}. Title: "${link.title}" | URL: /blog/${link.slug} | Category: ${link.category ?? 'General'}`
           )
           .join('\n')
       : 'No internal links available.'
 
   const sourcesText =
     outline.externalSources.length > 0
-      ? outline.externalSources
-          .map((source, index) => `${index + 1}. ${source.label} - ${source.url}`)
-          .join('\n')
+      ? outline.externalSources.map((s, index) => `${index + 1}. ${s.label} - ${s.url}`).join('\n')
       : 'No external sources selected.'
 
   return `
@@ -873,15 +869,15 @@ Article strategy:
 - Audience: ${plan.audience}
 - Angle: ${plan.angle}
 
-Approved outline:
+Approved editorial inputs:
 - Title: ${outline.title}
 - Excerpt: ${outline.excerpt}
 - SEO title: ${outline.seoTitle}
 - SEO description: ${outline.seoDescription}
-- Planned H2 sections:
-${outline.h2s.map((heading, index) => `${index + 1}. ${heading}`).join('\n')}
-- Planned key takeaways:
-${outline.keyTakeaways.map((takeaway, index) => `${index + 1}. ${takeaway}`).join('\n')}
+- Suggested H2 sections:
+${outline.h2s.map((h, i) => `${i + 1}. ${h}`).join('\n')}
+- Suggested key takeaways:
+${outline.keyTakeaways.map((k, i) => `${i + 1}. ${k}`).join('\n')}
 
 Available internal links:
 ${linksText}
@@ -889,90 +885,68 @@ ${linksText}
 Approved external sources:
 ${sourcesText}
 
-PRIMARY GOAL:
-Write a practical, trustworthy, SEO-optimized article that can rank on Google and be cited by AI search systems.
+MANDATORY CONTENT STRUCTURE:
+The contentHtml field MUST follow this exact order:
 
-MANDATORY HTML STRUCTURE:
-Your contentHtml MUST follow this order exactly:
+1. <p><em>This content is for informational and educational purposes only and does not constitute financial advice.</em></p>
+2. Intro: 2 short answer-first paragraphs that directly answer the search intent.
+3. <h2>Quick Answer</h2>
+   - One concise paragraph that directly answers the main query.
+4. <h2>Key Takeaways</h2>
+   - A <ul> with 3 to 5 specific, useful bullets.
+5. 4 to 7 practical body sections using <h2> and optional <h3> headings.
+6. <h2>Real Examples</h2>
+   - Include at least 2 realistic examples with numbers where useful.
+7. <h2>Common Mistakes to Avoid</h2>
+   - Use a <ul> with practical mistakes.
+8. <h2>What You Can Do Next</h2>
+   - Use an <ol> with clear next steps.
+9. <h2>FAQ</h2>
+   - Include 4 to 6 questions using <h3>Question</h3><p>Answer</p>.
+10. <h2>Sources</h2>
+   - Include at least 2 authoritative external links.
+11. Short conclusion paragraph.
 
-1. Start with this disclaimer:
-<p><em>This content is for informational and educational purposes only and does not constitute financial advice.</em></p>
+STRICT SECTION REQUIREMENTS:
+- You MUST include an exact <h2>Quick Answer</h2> section.
+- You MUST include an exact <h2>FAQ</h2> section.
+- You MUST include an exact <h2>Sources</h2> section.
+- Do not hide sources inside another section.
+- Do not skip FAQ.
+- Do not skip Quick Answer.
+- Do not create duplicate Key Takeaways sections.
 
-2. Then write an answer-first introduction in 2 to 3 short paragraphs.
-The first paragraph must directly answer the main search intent.
-
-3. Include:
-<h2>Quick Answer</h2>
-Write a concise answer in 1 to 2 paragraphs.
-
-4. Include:
-<h2>Key Takeaways</h2>
-Use a <ul> with 3 to 5 useful bullet points.
-
-5. Include the main educational sections.
-Use the approved H2 sections where possible, but make sure the article also includes:
-- <h2>What Is ${outline.primaryKeyword}?</h2> or a natural equivalent
-- <h2>How It Works</h2> or a natural equivalent
-- <h2>Step-by-Step Strategy</h2> or a natural equivalent
-- <h2>Real Examples</h2>
-- <h2>Common Mistakes to Avoid</h2>
-- <h2>What You Can Do Next</h2>
-- <h2>FAQ</h2>
-- <h2>Sources</h2>
-
-6. Under <h2>Real Examples</h2>, include at least 2 realistic examples.
-At least one example must include simple numbers in USD.
-
-7. Under <h2>FAQ</h2>, include 4 to 6 questions using <h3> for each question and <p> for each answer.
-
-8. Under <h2>Sources</h2>, include at least 2 credible external links using:
-<a href="URL" target="_blank" rel="noopener noreferrer">Label</a>
-
-CONTENT RULES:
-- contentHtml must be valid HTML only.
+HTML RULES:
+- contentHtml must be clean HTML only.
+- Use only <p>, <h2>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, and <a> unless a table is truly necessary.
 - Do not use markdown.
-- Use only standard tags like <p>, <h2>, <h3>, <ul>, <ol>, <li>, <strong>, <em>, and <a>.
-- Keep paragraphs short.
-- Avoid fluff, generic filler, robotic transitions, and repeated ideas.
-- Do not mention AI.
-- Do not use Philippine references, agencies, institutions, examples, or slang.
-- Write for Western readers only.
-- Prefer examples relevant to the US, Canada, UK, and Australia.
-- Keep the article around 1,400 to 2,200 words.
+- Do not include code fences.
+- Do not include escaped JSON inside contentHtml.
 
-SEO RULES:
-- Use the primary keyword naturally in the intro, at least one heading, and the conclusion.
-- Use related keywords naturally where they fit.
-- The title should be compelling, clear, and clickable without sounding spammy.
-- The seoDescription should be 140 to 160 characters and benefit-driven.
-- Make sections easy for Google and AI systems to extract.
-
-INTERNAL LINK RULES:
+SEO AND AI-CITATION RULES:
+- Write in a way that answers the query quickly and clearly.
+- Use the primary keyword naturally in the intro, Quick Answer, and at least one H2.
+- Make definitions and decision rules easy for AI systems to extract.
+- Use specific examples, tradeoffs, and conditions instead of vague advice.
 - Include 2 to 4 natural internal links using <a href="/blog/...">...</a>.
-- Only use links from the available internal links list.
-- Do not force links where they do not fit.
+- Include 2 authoritative external links using <a href="URL" target="_blank" rel="noopener noreferrer">Label</a>.
 
 FINANCE SAFETY RULES:
-- Do not give personalized financial, tax, legal, investing, or retirement advice.
+- Do not provide personalized financial, tax, investment, mortgage, legal, or retirement advice.
 - Do not promise outcomes.
-- Do not suggest guaranteed returns.
-- Do not make market predictions.
-- Do not recommend specific securities, stocks, crypto assets, or providers.
-- Explain tradeoffs and encourage readers to consider their situation.
-- For tax, retirement, investing, credit, real estate, and debt topics, include careful wording and avoid certainty.
+- Do not suggest guaranteed savings, returns, approval, or wealth-building results.
+- Do not use hype like "secret," "guaranteed," "risk-free," or "get rich."
+- Use careful language like "may," "can," "often," "consider," and "depends on."
 
-QUALITY BAR:
-The final article should feel like it was written by a strong human finance editor.
-It should:
-- answer the reader quickly
-- explain the topic clearly
-- give practical next steps
-- include realistic examples
-- avoid unsupported claims
-- include credible sources
-- be useful enough to publish without major rewriting
+QUALITY RULES:
+- Write for Western readers only.
+- Prefer examples relevant to the US, Canada, UK, and Australia.
+- Do not use Philippine references, agencies, institutions, or slang.
+- Keep the article around 1400 to 2200 words.
+- Avoid fluff, repetition, generic filler, and robotic transitions.
+- Do not mention AI.
 
-Return the same title, excerpt, seoTitle, and seoDescription from the approved outline unless a small improvement is clearly better.
+Return the same title, excerpt, seoTitle, and seoDescription from the approved outline unless a small improvement is necessary.
 Set author to "${AUTHOR_NAME}".
 `
 }
@@ -1049,17 +1023,30 @@ ${linksText}
 
 Humanization goals:
 - Keep the article factually consistent and SEO-aligned.
-- Preserve the same overall meaning, structure, and headings unless a small improvement makes it read better.
+- Improve flow, transitions, clarity, and examples.
 - Remove robotic phrasing, filler transitions, and generic AI-style wording.
 - Vary sentence length and paragraph rhythm.
-- Add stronger transitions between sections.
 - Make the tone feel like a thoughtful finance editor, not a template.
-- Keep practical examples and decision-making guidance.
+- Preserve practical examples and decision-making guidance.
 - Preserve or improve 2 to 4 natural internal links using <a href="/blog/...">...</a>.
-- Keep any authority links and disclaimers.
-- Do not use markdown. Return valid HTML only in contentHtml.
+- Keep authority links and disclaimers.
 - Do not introduce new unverifiable facts or statistics.
 - Do not make personalized financial, tax, or legal recommendations.
+
+MANDATORY PRESERVATION RULES:
+You MUST keep these sections in contentHtml exactly as <h2> headings:
+- <h2>Quick Answer</h2>
+- <h2>Key Takeaways</h2>
+- <h2>Real Examples</h2>
+- <h2>Common Mistakes to Avoid</h2>
+- <h2>What You Can Do Next</h2>
+- <h2>FAQ</h2>
+- <h2>Sources</h2>
+
+Do not remove, rename, merge, or skip those sections.
+Do not create duplicate Key Takeaways sections.
+Do not move Sources into another section.
+Do not use markdown. Return valid HTML only in contentHtml.
 
 Current draft to refine:
 TITLE: ${article.title}
@@ -1102,6 +1089,49 @@ async function humanizeArticle(
 function internalLinksSummary(contentHtml: string) {
   const matches = Array.from(contentHtml.matchAll(/href=\"(\/blog\/[^\"]+)\"/gi)).map((m) => m[1])
   return Array.from(new Set(matches)).slice(0, 6)
+}
+
+function hasH2Section(contentHtml: string, heading: string) {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`<h2[^>]*>\\s*${escaped}\\s*</h2>`, 'i').test(contentHtml)
+}
+
+function ensureArticleRequiredSections(article: GeneratedArticle, outline: ArticleOutline) {
+  let contentHtml = article.contentHtml.trim()
+
+  if (!/^\s*<p><em>This content is for informational and educational purposes only and does not constitute financial advice\.<\/em><\/p>/i.test(contentHtml)) {
+    contentHtml = `<p><em>This content is for informational and educational purposes only and does not constitute financial advice.</em></p>\n${contentHtml}`
+  }
+
+  if (!hasH2Section(contentHtml, 'Quick Answer')) {
+    contentHtml = contentHtml.replace(
+      /<h2[^>]*>\s*Key Takeaways\s*<\/h2>/i,
+      `<h2>Quick Answer</h2>\n<p>${outline.primaryKeyword} depends on your goals, timeline, income, and risk level. The best choice is usually the one that solves the immediate financial problem without creating unnecessary cost, risk, or complexity.</p>\n<h2>Key Takeaways</h2>`
+    )
+  }
+
+  if (!hasH2Section(contentHtml, 'Real Examples')) {
+    contentHtml += `\n<h2>Real Examples</h2>\n<p>Example 1: A reader with steady income may choose a simple automated plan because predictable transfers make progress easier to maintain.</p>\n<p>Example 2: A reader with variable income may need a larger cash buffer first, then use percentage-based transfers so savings adjust naturally when income changes.</p>`
+  }
+
+  if (!hasH2Section(contentHtml, 'FAQ')) {
+    contentHtml += `\n<h2>FAQ</h2>\n<h3>What is the best first step?</h3>\n<p>Start by identifying your goal, timeline, current cash flow, and the biggest risk that could interrupt your plan.</p>\n<h3>How do I know if this strategy fits me?</h3>\n<p>A strategy fits when it is realistic for your income, protects essential expenses, and does not rely on guaranteed outcomes.</p>\n<h3>Should I speak with a professional?</h3>\n<p>Consider speaking with a qualified professional when decisions involve taxes, investing, debt, mortgages, or major long-term financial commitments.</p>\n<h3>How often should I review the plan?</h3>\n<p>Review it whenever your income, expenses, goals, or financial obligations change.</p>`
+  }
+
+  if (!hasH2Section(contentHtml, 'Sources')) {
+    const sourceItems = outline.externalSources.length > 0
+      ? outline.externalSources
+          .map((source) => `<li><a href="${source.url}" target="_blank" rel="noopener noreferrer">${source.label}</a></li>`)
+          .join('')
+      : '<li><a href="https://www.consumerfinance.gov/" target="_blank" rel="noopener noreferrer">Consumer Financial Protection Bureau</a></li>'
+
+    contentHtml += `\n<h2>Sources</h2>\n<ul>${sourceItems}</ul>`
+  }
+
+  return {
+    ...article,
+    contentHtml,
+  }
 }
 
 async function createDraftPost(
@@ -1272,7 +1302,8 @@ async function runDraftGeneration(now: Date, queueItem?: QueueRow) {
   const internalLinks = await fetchInternalLinks(category, plan.primaryKeyword, plan.relatedKeywords)
   const outline = await generateOutline(category, plan, internalLinks)
   const articleDraft = await generateArticle(category, plan, outline, internalLinks)
-  const article = await humanizeArticle(articleDraft, category, plan, outline, internalLinks)
+  const humanizedArticle = await humanizeArticle(articleDraft, category, plan, outline, internalLinks)
+  const article = ensureArticleRequiredSections(humanizedArticle, outline)
   const slug = buildSlug(article.title)
 
   if (await slugExists(slug)) {
