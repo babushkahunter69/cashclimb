@@ -1134,6 +1134,27 @@ function ensureArticleRequiredSections(article: GeneratedArticle, outline: Artic
   }
 }
 
+async function autoFeatureBestArticle(postId: string) {
+  const supabase = createAdminClient()
+
+  await supabase
+    .from('posts')
+    .update({ is_featured: false })
+    .neq('id', postId)
+
+  const { error } = await supabase
+    .from('posts')
+    .update({
+      is_featured: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', postId)
+
+  if (error) {
+    throw new Error(`Failed to auto-feature article: ${error.message}`)
+  }
+}
+
 async function createDraftPost(
   article: GeneratedArticle,
   category: Category,
@@ -1240,6 +1261,11 @@ async function createDraftPost(
   if (qualityError) {
     throw new Error(qualityError.message)
   }
+  if (isSafeToAutoPublish) {
+    await autoFeatureBestArticle(data.id)
+  }
+  
+  return data
 
   // 🧹 OPTIONAL: mark keyword as completed
   if (plan?.primaryKeyword) {
