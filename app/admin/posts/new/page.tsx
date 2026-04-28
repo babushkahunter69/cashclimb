@@ -35,7 +35,7 @@ export default function NewPostPage() {
     title: '',
     excerpt: '',
     category: 'Investing',
-    author: '',
+    author: 'Daniel Reeves',
   })
   const [content, setContent] = useState('')
   const [coverUrl, setCoverUrl] = useState('')
@@ -72,7 +72,7 @@ export default function NewPostPage() {
   }
 
   async function handleSubmit(published: boolean) {
-    if (!form.title || !form.excerpt || !content || !form.author) {
+    if (!form.title || !form.excerpt || !content) {
       toast.error('Please fill in all required fields.')
       return
     }

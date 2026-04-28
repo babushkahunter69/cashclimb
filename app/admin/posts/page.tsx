@@ -105,7 +105,7 @@ function PostsTable({
               </td>
 
               <td className="px-5 py-4 text-xs text-[#9A9490]">
-                {p.author || '—'}
+                {!p.author || p.author.toLowerCase().includes('editorial') ? 'Daniel Reeves' : p.author}
               </td>
 
               <td className="px-5 py-4 text-xs text-[#9A9490]">

@@ -35,7 +35,8 @@ async function updatePostAction(formData: FormData) {
   const excerpt = String(formData.get('excerpt') || '').trim()
   const body = String(formData.get('body') || '').trim()
   const category = String(formData.get('category') || '').trim()
-  const author = String(formData.get('author') || '').trim()
+  const rawAuthor = String(formData.get('author') || '').trim()
+  const author = !rawAuthor || rawAuthor.toLowerCase().includes('editorial') ? 'Daniel Reeves' : rawAuthor
   const cover_url = String(formData.get('cover_url') || '').trim()
   const seo_title = String(formData.get('seo_title') || '').trim()
   const seo_description = String(formData.get('seo_description') || '').trim()
@@ -207,7 +208,7 @@ export default async function EditPostPage({ params }: PageProps) {
 
               <div>
                 <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-[#6A6460]">Author</label>
-                <input name="author" defaultValue={post.author ?? ''} className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-sm outline-none focus:border-gold" />
+                <input name="author" defaultValue={post.author && !post.author.toLowerCase().includes('editorial') ? post.author : 'Daniel Reeves'} className="w-full rounded-lg border border-border bg-bg px-4 py-3 text-sm outline-none focus:border-gold" />
               </div>
 
               <div>

@@ -27,7 +27,7 @@ type RelatedLink = {
   slug: string
 }
 
-const AUTHOR_NAME = 'CashClimb Editorial'
+const AUTHOR_NAME = 'Daniel Reeves'
 
 const TOOL_BLOCKS: Record<string, string[]> = {
   'Personal Finance': [
@@ -338,7 +338,7 @@ Return ONLY valid JSON with this shape:
   "seoTitle": "string",
   "seoDescription": "string",
   "contentHtml": "string",
-  "author": "CashClimb Editorial"
+  "author": "Daniel Reeves"
 }
 
 Goals:
@@ -372,7 +372,7 @@ Return ONLY valid JSON with this shape:
   "seoTitle": "string",
   "seoDescription": "string",
   "contentHtml": "string",
-  "author": "CashClimb Editorial"
+  "author": "Daniel Reeves"
 }
 
 Goals:
@@ -486,7 +486,7 @@ export async function humanizeExistingPost(post: EditablePost): Promise<Rewritte
     seoTitle: parsed?.seoTitle?.trim() || post.seo_title || post.title,
     seoDescription: parsed?.seoDescription?.trim() || post.seo_description || post.excerpt,
     contentHtml,
-    author: parsed?.author?.trim() || post.author || AUTHOR_NAME,
+    author: parsed?.author?.trim() || AUTHOR_NAME,
   }
 }
 
@@ -503,7 +503,7 @@ export async function refreshExistingPost(post: EditablePost): Promise<Rewritten
     seoTitle: parsed?.seoTitle?.trim() || post.seo_title || post.title,
     seoDescription: parsed?.seoDescription?.trim() || post.seo_description || post.excerpt,
     contentHtml,
-    author: parsed?.author?.trim() || post.author || AUTHOR_NAME,
+    author: parsed?.author?.trim() || AUTHOR_NAME,
   }
 }
 
@@ -540,6 +540,6 @@ export async function improveFailedChecks(
     seoTitle: parsed?.seoTitle?.trim() || metadata.seoTitle,
     seoDescription: parsed?.seoDescription?.trim() || metadata.seoDescription,
     contentHtml,
-    author: post.author || AUTHOR_NAME,
+    author: AUTHOR_NAME,
   }
 }

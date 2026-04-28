@@ -69,7 +69,7 @@ type QueueRow = {
   brief: Record<string, any> | null
 }
 
-const AUTHOR_NAME = 'CashClimb Editorial'
+const AUTHOR_NAME = 'Daniel Reeves'
 const MAX_TOPIC_PLAN_ATTEMPTS = 18
 const KEYWORD_LOOKBACK_DAYS = 45
 const TITLE_LOOKBACK_DAYS = 30
@@ -858,7 +858,7 @@ Return ONLY valid JSON in this exact shape:
   "seoTitle": "string",
   "seoDescription": "string",
   "contentHtml": "string",
-  "author": "CashClimb Editorial"
+  "author": "Daniel Reeves"
 }
 
 Article strategy:
@@ -1008,7 +1008,7 @@ Return ONLY valid JSON in this exact shape:
   "seoTitle": "string",
   "seoDescription": "string",
   "contentHtml": "string",
-  "author": "CashClimb Editorial"
+  "author": "Daniel Reeves"
 }
 
 Article context:
@@ -1082,7 +1082,7 @@ async function humanizeArticle(
     seoTitle: parsed.seoTitle?.trim() || article.seoTitle,
     seoDescription: parsed.seoDescription?.trim() || article.seoDescription,
     contentHtml: parsed.contentHtml.trim(),
-    author: parsed.author?.trim() || article.author || AUTHOR_NAME,
+    author: parsed.author?.trim() || AUTHOR_NAME,
   }
 }
 

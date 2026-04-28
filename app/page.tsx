@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Post } from '@/types'
 import type { Metadata } from 'next'
+import { getAuthorByName } from '@/lib/authors'
+import { getAutoAuthor } from '@/lib/seo-authors'
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
 const socialImage = '/opengraph-image'
@@ -54,6 +56,20 @@ function formatDate(date: string) {
   })
 }
 
+function resolveAuthorName(post: Post) {
+  const fallbackAuthor = getAutoAuthor('cashclimb', post.category)
+
+  if (!post.author || post.author.toLowerCase().includes('editorial')) {
+    return fallbackAuthor.name
+  }
+
+  return post.author
+}
+
+function resolveAuthor(post: Post) {
+  return getAuthorByName(resolveAuthorName(post))
+}
+
 export default async function HomePage() {
   const supabase = createAdminClient()
 
@@ -66,6 +82,7 @@ export default async function HomePage() {
 
   const allPosts: Post[] = posts ?? []
   const [featured, ...rest] = allPosts
+  const featuredAuthor = featured ? resolveAuthor(featured) : null
 
   return (
     <>
@@ -145,7 +162,7 @@ export default async function HomePage() {
                   <div className="bg-bg border border-border rounded-xl p-4">
                     <div className="text-[#6A6460] mb-1">Author</div>
                     <div className="text-[#F0EDE8] font-semibold">
-                      {featured.author || 'CashClimb Editorial'}
+                      {featuredAuthor?.name}
                     </div>
                   </div>
                   <div className="bg-bg border border-border rounded-xl p-4">
@@ -299,7 +316,7 @@ export default async function HomePage() {
 
               <div className="flex gap-4 text-sm flex-wrap mb-6">
                 <span className="text-[#9A9490]">
-                  By {featured.author || 'CashClimb Editorial'}
+                  By {featuredAuthor?.name}
                 </span>
                 <span className="text-[#6A6460]">
                   Updated {formatDate(featured.updated_at || featured.created_at)}
