@@ -1,7 +1,19 @@
 import { NextResponse } from 'next/server'
 
+const ADMIN_COOKIE = 'cc-admin-token'
+
 export async function POST() {
-  const response = NextResponse.redirect(new URL('/admin/login', process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org'))
-  response.cookies.set('cc-admin-token', '', { path: '/', maxAge: 0 })
-  return response
+  const res = NextResponse.json({ ok: true })
+
+  res.cookies.set({
+    name: ADMIN_COOKIE,
+    value: '',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: 0,
+  })
+
+  return res
 }
