@@ -2,7 +2,13 @@
 
 import { useState } from 'react'
 
-export default function LoginForm({ error }: { error?: string | null }) {
+export default function LoginForm({
+  error,
+  from,
+}: {
+  error?: string | null
+  from?: string
+}) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,11 +28,16 @@ export default function LoginForm({ error }: { error?: string | null }) {
         }),
       })
 
-      if (!res.ok) throw new Error('Login failed')
+      const data = await res.json().catch(() => ({}))
 
-      window.location.href = '/admin'
+      if (!res.ok || !data.success) {
+        alert(data.error || 'Invalid login')
+        return
+      }
+
+      window.location.assign(from || '/admin')
     } catch {
-      alert('Invalid login')
+      alert('Login request failed')
     } finally {
       setLoading(false)
     }
@@ -40,11 +51,13 @@ export default function LoginForm({ error }: { error?: string | null }) {
       >
         <h1 className="text-xl font-semibold">Admin Login</h1>
 
-        {error ? <div className="text-sm text-red-500">Invalid credentials</div> : null}
+        {error ? (
+          <div className="text-sm text-red-500">Invalid credentials</div>
+        ) : null}
 
         <input
           type="text"
-          placeholder="Username"
+          placeholder="Username or email"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="w-full rounded border border-neutral-700 bg-black p-2"
@@ -63,7 +76,7 @@ export default function LoginForm({ error }: { error?: string | null }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-yellow-500 py-2 font-medium text-black"
+          className="w-full rounded bg-yellow-500 py-2 font-medium text-black disabled:opacity-60"
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>

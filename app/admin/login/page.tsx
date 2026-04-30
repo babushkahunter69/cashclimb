@@ -5,7 +5,15 @@ export const dynamic = 'force-dynamic'
 export default function AdminLoginPage({
   searchParams,
 }: {
-  searchParams?: { error?: string }
+  searchParams?: {
+    error?: string
+    from?: string
+  }
 }) {
-  return <LoginForm error={searchParams?.error || null} />
+  return (
+    <LoginForm
+      error={searchParams?.error || null}
+      from={searchParams?.from || '/admin'}
+    />
+  )
 }
