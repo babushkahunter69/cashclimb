@@ -167,9 +167,9 @@ export default async function BlogPostPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        <article className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
-          <div>
+      <main className="mx-auto max-w-7xl px-6 py-12">
+        <article className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0">
             <div className="mb-8">
               <Link
                 href="/blog"
@@ -184,11 +184,11 @@ export default async function BlogPostPage({
                 <span>{post.read_time}</span>
               </div>
 
-              <h1 className="font-serif text-4xl md:text-5xl font-black leading-tight mt-4 text-[#F0EDE8]">
+              <h1 className="mt-4 max-w-4xl break-words font-serif text-4xl font-black leading-tight text-[#F0EDE8]">
                 {post.title}
               </h1>
 
-              <p className="text-[#B7B0AA] text-lg leading-relaxed mt-5 max-w-3xl">
+              <p className="mt-5 max-w-4xl text-lg leading-relaxed text-[#B7B0AA]">
                 {post.excerpt}
               </p>
             </div>
@@ -326,8 +326,8 @@ export default async function BlogPostPage({
             ) : null}
           </div>
 
-          <aside className="space-y-5">
-            <div className="rounded-2xl border border-border bg-bg-2 p-5 sticky top-6">
+          <aside className="min-w-0 space-y-5">
+            <div className="rounded-2xl border border-border bg-bg-2 p-5 lg:sticky lg:top-6">
               <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
                 Article details
               </p>

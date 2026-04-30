@@ -1,46 +1,67 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { authedFetch } from './authedFetch'
 
-export default function SEOFixButton({ postId }: { postId: string }) {
+function extractPostId(pathname: string) {
+  const parts = pathname.split('/').filter(Boolean)
+  const postsIndex = parts.indexOf('posts')
+
+  if (postsIndex === -1) return ''
+  return parts[postsIndex + 1] || ''
+}
+
+export default function SEOFixButton({ postId }: { postId?: string }) {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const pathname = usePathname()
 
   async function handleClick() {
-    setLoading(true)
+    const resolvedPostId = postId || extractPostId(pathname)
+
+    console.log('[SEOFixButton]', {
+      postId,
+      pathname,
+      resolvedPostId,
+    })
+
+    if (!resolvedPostId) {
+      toast.error(`Missing post ID from ${pathname}`)
+      return
+    }
+
     try {
-      const payload = await authedFetch(`/api/admin/posts/${postId}/fix-seo`, {
+      const res = await fetch(`/api/admin/posts/${resolvedPostId}/fix-seo`, {
         method: 'POST',
+        cache: 'no-store',
       })
 
-      const fixed = payload?.fixesApplied?.length ?? 0
-      const unresolved = payload?.unresolved?.length ?? 0
-      const score = payload?.evaluation?.score ?? '—'
+      const data = await res.json().catch(() => ({}))
 
-      if (unresolved > 0) {
-        toast.success(`Fixed ${fixed}. Score: ${score}. ${unresolved} item(s) still need review.`)
-      } else {
-        toast.success(`SEO issues fixed. Score: ${score}.`)
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Fix SEO failed')
+        return
       }
+
+      toast.success(`Fixed SEO. Score: ${data.score ?? 'updated'}`)
 
       router.refresh()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fix SEO issues.'
-      toast.error(message)
-      if (/session expired/i.test(message) && typeof window !== 'undefined') {
-        window.location.href = '/admin/login'
-      }
-    } finally {
-      setLoading(false)
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+    } catch (err) {
+      console.error('[SEOFixButton]', err)
+      toast.error('Request failed')
     }
   }
 
   return (
-    <button type="button" onClick={handleClick} disabled={loading} className="cc-btn-primary w-full disabled:opacity-60">
-      {loading ? 'Fixing SEO issues…' : 'Fix SEO issues'}
+    <button
+      type="button"
+      onClick={handleClick}
+      className="w-full rounded-xl bg-gold px-4 py-4 text-xs font-black uppercase tracking-[0.18em] text-bg transition hover:bg-gold-light"
+    >
+      Fix SEO Issues
     </button>
   )
 }
