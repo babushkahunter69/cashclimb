@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 export default function LoginForm({ error }: { error?: string | null }) {
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -15,7 +15,11 @@ export default function LoginForm({ error }: { error?: string | null }) {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          username,
+          email: username,
+          password,
+        }),
       })
 
       if (!res.ok) throw new Error('Login failed')
@@ -39,10 +43,10 @@ export default function LoginForm({ error }: { error?: string | null }) {
         {error ? <div className="text-sm text-red-500">Invalid credentials</div> : null}
 
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="w-full rounded border border-neutral-700 bg-black p-2"
           required
         />
