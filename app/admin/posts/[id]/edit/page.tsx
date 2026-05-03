@@ -111,7 +111,7 @@ export default async function EditPostPage({ params }: { params: { id: string } 
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <PostForm post={post} action={updatePost} submitLabel="Save post" />
-        <SEOChecklistCard postId={post.id} evaluation={evaluation as any} />
+        <SEOChecklistCard postId={params.id} evaluation={evaluation as any} />
       </div>
     </div>
   )

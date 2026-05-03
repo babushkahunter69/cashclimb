@@ -211,10 +211,12 @@ function fixBody(post: any) {
 
 export async function POST(
   request: Request,
-  context: { params: { postId: string } }
+  context: { params: { postId?: string; id?: string } }
 ) {
   try {
-    const postId = clean((context.params as any)?.postId || (context.params as any)?.id)
+    const postIdFromParams = clean(context.params?.postId || context.params?.id)
+    const postIdFromUrl = clean(new URL(request.url).pathname.split('/').filter(Boolean).at(-2))
+    const postId = postIdFromParams || postIdFromUrl
 
     if (!postId) {
       return NextResponse.json(

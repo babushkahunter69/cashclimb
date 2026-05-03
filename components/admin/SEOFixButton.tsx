@@ -1,36 +1,44 @@
 'use client'
 
-import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
-function extractPostId(pathname: string) {
-  const parts = String(pathname || '').split('/').filter(Boolean)
+function fromPathname(pathname?: string | null) {
+  const path = pathname || (typeof window !== 'undefined' ? window.location.pathname : '')
+  const parts = path.split('/').filter(Boolean)
   const postsIndex = parts.indexOf('posts')
 
   if (postsIndex === -1) return ''
   return parts[postsIndex + 1] || ''
 }
 
-export default function SEOFixButton({ postId }: { postId?: string | null }) {
+function fromParams(params: Record<string, string | string[]>) {
+  const candidates = [params.postId, params.id]
+
+  for (const value of candidates) {
+    if (Array.isArray(value)) return value[0] || ''
+    if (typeof value === 'string') return value
+  }
+
+  return ''
+}
+
+export default function SEOFixButton({ postId }: { postId?: string }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [loading, setLoading] = useState(false)
+  const params = useParams<Record<string, string | string[]>>()
 
   async function handleClick() {
-    const resolvedPostId = String(postId || extractPostId(pathname) || '').trim()
+    const resolvedPostId = postId || fromParams(params) || fromPathname(pathname)
 
     if (!resolvedPostId) {
       toast.error(`Missing post ID from ${pathname || 'current page'}`)
       return
     }
 
-    setLoading(true)
-
     try {
       const res = await fetch(`/api/admin/posts/${encodeURIComponent(resolvedPostId)}/fix-seo`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         cache: 'no-store',
       })
 
@@ -46,12 +54,10 @@ export default function SEOFixButton({ postId }: { postId?: string | null }) {
 
       setTimeout(() => {
         window.location.reload()
-      }, 500)
+      }, 400)
     } catch (err) {
       console.error('[SEOFixButton]', err)
       toast.error('Request failed')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -59,10 +65,9 @@ export default function SEOFixButton({ postId }: { postId?: string | null }) {
     <button
       type="button"
       onClick={handleClick}
-      disabled={loading}
-      className="w-full rounded-xl bg-gold px-4 py-4 text-xs font-black uppercase tracking-[0.18em] text-bg transition hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-full rounded-xl bg-gold px-4 py-4 text-xs font-black uppercase tracking-[0.18em] text-bg transition hover:bg-gold-light"
     >
-      {loading ? 'Fixing SEO...' : 'Fix SEO Issues'}
+      Fix SEO Issues
     </button>
   )
 }

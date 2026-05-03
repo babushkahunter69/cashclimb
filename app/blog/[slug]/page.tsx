@@ -10,6 +10,7 @@ import Footer from '@/components/Footer'
 import { createAdminClient } from '@/lib/supabase-server'
 import { getAuthorByName, resolvePostAuthorName } from '@/lib/authors'
 import { getAutoAuthor } from '@/lib/seo-authors'
+import { normalizeLinksInHtml } from '@/lib/normalize-links'
 import type { Post } from '@/types'
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
@@ -21,6 +22,14 @@ function formatDate(date?: string) {
     month: 'long',
     day: 'numeric',
   })
+}
+
+function jsonLd(data: unknown) {
+  return JSON.stringify(data).replace(/</g, '\\u003c')
+}
+
+function stripHtml(value?: string | null) {
+  return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 async function getPost(slug: string) {
@@ -62,26 +71,28 @@ export async function generateMetadata({
 
   const url = `${siteUrl}/blog/${post.slug}`
   const image = post.cover_url || `${siteUrl}/opengraph-image`
+  const description = (post as any).seo_description || post.excerpt
+  const title = (post as any).seo_title || post.title
 
   return {
-    title: `${post.title} | CashClimb`,
-    description: post.excerpt,
+    title: `${title} | CashClimb`,
+    description,
     alternates: {
       canonical: url,
     },
     openGraph: {
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       url,
       type: 'article',
       images: [{ url: image }],
       publishedTime: post.created_at,
-      modifiedTime: post.updated_at,
+      modifiedTime: post.updated_at || post.created_at,
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.title,
-      description: post.excerpt,
+      title,
+      description,
       images: [image],
     },
   }
@@ -102,53 +113,95 @@ export default async function BlogPostPage({
   const relatedPosts = await getRelatedPosts(post)
   const articleUrl = `${siteUrl}/blog/${post.slug}`
   const image = post.cover_url || `${siteUrl}/opengraph-image`
+  const cleanBody = normalizeLinksInHtml(post.body || '')
+  const plainBody = stripHtml(cleanBody)
+  const updatedDate = post.updated_at || post.created_at
 
-  const articleSchema = {
+  const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    description: post.excerpt,
-    image,
-    datePublished: post.created_at,
-    dateModified: post.updated_at || post.created_at,
-    author: {
-      '@type': author.schemaType,
-      name: author.name,
-      url: `${siteUrl}/authors/${author.slug}`,
-      description: author.intro,
-      knowsAbout: author.topics,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'CashClimb',
-      url: siteUrl,
-      logo: {
-        '@type': 'ImageObject',
-        url: `${siteUrl}/opengraph-image`,
-      },
-    },
-    mainEntityOfPage: articleUrl,
-  }
-
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
+    '@graph': [
       {
-        '@type': 'Question',
-        name: `Is ${post.title} financial advice?`,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'No. CashClimb content is for informational and educational purposes only and should not be treated as personal financial advice.',
+        '@type': 'Organization',
+        '@id': `${siteUrl}/#organization`,
+        name: 'CashClimb',
+        url: siteUrl,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${siteUrl}/opengraph-image`,
         },
       },
       {
-        '@type': 'Question',
-        name: 'Who reviews CashClimb content?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'CashClimb articles are created and reviewed by the editorial team for clarity, usefulness, and responsible personal finance guidance.',
+        '@type': 'Person',
+        '@id': `${siteUrl}/authors/${author.slug}#author`,
+        name: author.name,
+        url: `${siteUrl}/authors/${author.slug}`,
+        jobTitle: author.role,
+        description: author.intro,
+        knowsAbout: author.topics,
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${articleUrl}#breadcrumb`,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: siteUrl,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Articles',
+            item: `${siteUrl}/blog`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 3,
+            name: post.title,
+            item: articleUrl,
+          },
+        ],
+      },
+      {
+        '@type': 'Article',
+        '@id': `${articleUrl}#article`,
+        mainEntityOfPage: articleUrl,
+        headline: post.title,
+        description: post.excerpt,
+        image,
+        articleSection: post.category,
+        wordCount: plainBody ? plainBody.split(/\s+/).length : undefined,
+        datePublished: post.created_at,
+        dateModified: updatedDate,
+        author: {
+          '@id': `${siteUrl}/authors/${author.slug}#author`,
         },
+        publisher: {
+          '@id': `${siteUrl}/#organization`,
+        },
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': `${articleUrl}#faq`,
+        mainEntity: [
+          {
+            '@type': 'Question',
+            name: `Is ${post.title} financial advice?`,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'No. CashClimb content is for informational and educational purposes only and should not be treated as personal financial advice.',
+            },
+          },
+          {
+            '@type': 'Question',
+            name: 'Who reviews CashClimb content?',
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: 'CashClimb articles are reviewed for clarity, usefulness, and responsible financial education.',
+            },
+          },
+        ],
       },
     ],
   }
@@ -159,32 +212,27 @@ export default async function BlogPostPage({
 
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
       />
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
-
-      <main className="mx-auto max-w-7xl px-6 py-12 overflow-hidden">
-        <article className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,820px)_minmax(280px,320px)] lg:justify-center">
-          <div className="min-w-0">
+      <main className="mx-auto max-w-7xl overflow-hidden px-6 py-12">
+        <article className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="min-w-0 max-w-full overflow-hidden">
             <div className="mb-8">
               <Link
                 href="/blog"
-                className="text-sm text-gold font-semibold hover:opacity-80"
+                className="text-sm font-semibold text-gold hover:opacity-80"
               >
                 ← Back to articles
               </Link>
 
-              <div className="mt-6 flex flex-wrap items-center gap-3 text-xs uppercase tracking-widest font-bold text-[#9A9490]">
+              <div className="mt-6 flex flex-wrap items-center gap-3 text-xs font-bold uppercase tracking-widest text-[#9A9490]">
                 <span className="text-gold">{post.category}</span>
-                <span>{formatDate(post.updated_at || post.created_at)}</span>
+                <span>{formatDate(updatedDate)}</span>
                 <span>{post.read_time}</span>
               </div>
 
-              <h1 className="mt-4 max-w-4xl break-words font-serif text-4xl font-black leading-tight text-[#F0EDE8] sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 max-w-4xl break-words font-serif text-4xl font-black leading-tight text-[#F0EDE8] md:text-5xl">
                 {post.title}
               </h1>
 
@@ -195,20 +243,23 @@ export default async function BlogPostPage({
 
             <Link
               href={`/authors/${author.slug}`}
-              className="mb-8 block rounded-2xl border border-border bg-bg-2 p-5 hover:border-gold transition-colors"
+              rel="author"
+              className="mb-8 block rounded-2xl border border-border bg-bg-2 p-5 transition-colors hover:border-gold"
             >
               <div className="flex items-start gap-4">
-                <div className="h-14 w-14 shrink-0 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold leading-none">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-[#111214] text-center text-base font-black leading-none tracking-normal text-[#F0EDE8]">
                   {author.initials}
                 </div>
 
-                <div>
-                  <p className="text-xs uppercase tracking-widest text-gold font-bold">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gold">
                     Written by
                   </p>
-                  <h2 className="text-[#F0EDE8] font-bold mt-1">{author.name}</h2>
-                  <p className="text-sm text-[#9A9490] mt-1">{author.role}</p>
-                  <p className="text-sm text-[#B7B0AA] leading-relaxed mt-2">
+                  <p className="mt-1 text-sm text-[#9A9490]">
+                    By <span className="font-bold text-[#F0EDE8]">{author.name}</span>
+                  </p>
+                  <p className="mt-1 text-sm text-[#9A9490]">{author.role}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[#B7B0AA]">
                     {author.intro}
                   </p>
                 </div>
@@ -216,7 +267,7 @@ export default async function BlogPostPage({
             </Link>
 
             {post.cover_url ? (
-              <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden border border-border mb-10">
+              <div className="relative mb-10 aspect-[16/8] overflow-hidden rounded-3xl border border-border">
                 <Image
                   src={post.cover_url}
                   alt={post.title}
@@ -227,75 +278,76 @@ export default async function BlogPostPage({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-border bg-bg-2 p-5 mb-8">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+            <section className="mb-8 rounded-2xl border border-border bg-bg-2 p-5">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 Key takeaways
-              </p>
-              <ul className="space-y-2 text-sm text-[#D7D0CA] leading-relaxed">
+              </h2>
+              <ul className="space-y-2 text-sm leading-relaxed text-[#D7D0CA]">
                 <li>Use this guide as educational information, not personal financial advice.</li>
                 <li>Compare options carefully before making money decisions.</li>
                 <li>Focus on practical actions that match your income, goals, and risk level.</li>
               </ul>
-            </div>
+            </section>
 
             <div
-              className="prose-cashclimb"
-              dangerouslySetInnerHTML={{ __html: post.body }}
+              className="prose-cashclimb max-w-none overflow-hidden break-words"
+              dangerouslySetInnerHTML={{ __html: cleanBody }}
             />
 
-            <div className="mt-10 rounded-2xl border border-border bg-bg-2 p-5">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+            <section className="mt-10 rounded-2xl border border-border bg-bg-2 p-5">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 Financial disclaimer
-              </p>
-              <p className="text-sm text-[#B7B0AA] leading-relaxed">
+              </h2>
+              <p className="text-sm leading-relaxed text-[#B7B0AA]">
                 This content is for informational and educational purposes only.
                 It does not constitute financial, investment, tax, or legal advice.
                 Always consider your personal situation and consult a qualified professional
                 before making financial decisions.
               </p>
-            </div>
+            </section>
 
-            <div className="mt-10 rounded-2xl border border-border bg-bg-2 p-6">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+            <section className="mt-10 rounded-2xl border border-border bg-bg-2 p-6">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 Reviewed by
-              </p>
-              <h2 className="text-[#F0EDE8] font-bold">{fallbackAuthor.reviewerName}</h2>
+              </h2>
+              <p className="font-bold text-[#F0EDE8]">{fallbackAuthor.reviewerName}</p>
               <p className="text-sm text-[#9A9490]">{fallbackAuthor.reviewerRole}</p>
-              <p className="text-sm text-[#B7B0AA] leading-relaxed mt-3">
+              <p className="mt-3 text-sm leading-relaxed text-[#B7B0AA]">
                 {fallbackAuthor.reviewerBio}
               </p>
-            </div>
+            </section>
 
-            <div className="mt-10 rounded-2xl border border-border bg-bg-2 p-6">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+            <section className="mt-10 rounded-2xl border border-border bg-bg-2 p-6">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 About the author
-              </p>
+              </h2>
               <div className="flex items-start gap-4">
-                <div className="h-14 w-14 shrink-0 rounded-full border border-border bg-[#111214] text-[#F0EDE8] flex items-center justify-center text-sm font-bold leading-none">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-border bg-[#111214] text-center text-base font-black leading-none tracking-normal text-[#F0EDE8]">
                   {author.initials}
                 </div>
-                <div>
-                  <h2 className="text-[#F0EDE8] font-bold">{author.name}</h2>
+                <div className="min-w-0">
+                  <p className="font-bold text-[#F0EDE8]">{author.name}</p>
                   <p className="text-sm text-[#9A9490]">{author.role}</p>
-                  <p className="text-sm text-[#B7B0AA] leading-relaxed mt-3">
+                  <p className="mt-3 text-sm leading-relaxed text-[#B7B0AA]">
                     {author.bio.join(' ')}
                   </p>
                   <Link
                     href={`/authors/${author.slug}`}
-                    className="inline-flex mt-4 text-sm text-gold font-semibold hover:opacity-80"
+                    rel="author"
+                    className="mt-4 inline-flex text-sm font-semibold text-gold hover:opacity-80"
                   >
                     View author profile →
                   </Link>
                 </div>
               </div>
-            </div>
+            </section>
 
             {relatedPosts.length > 0 ? (
               <section className="mt-12">
-                <p className="text-xs uppercase tracking-widest text-gold font-bold mb-4">
+                <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-gold">
                   Related guides
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                </h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {relatedPosts.map((item) => {
                     const relatedAuthorName = resolvePostAuthorName(item)
                     const relatedAuthor = getAuthorByName(relatedAuthorName)
@@ -304,18 +356,18 @@ export default async function BlogPostPage({
                       <Link
                         key={item.id}
                         href={`/blog/${item.slug}`}
-                        className="min-w-0 rounded-2xl border border-border bg-bg-2 p-5 hover:border-gold transition-colors"
+                        className="rounded-2xl border border-border bg-bg-2 p-5 transition-colors hover:border-gold"
                       >
-                        <p className="text-xs text-gold font-bold mb-2">
+                        <p className="mb-2 text-xs font-bold text-gold">
                           {item.category}
                         </p>
-                        <h3 className="break-words text-[#F0EDE8] font-bold leading-snug">
+                        <h3 className="break-words font-bold leading-snug text-[#F0EDE8]">
                           {item.title}
                         </h3>
-                        <p className="text-sm text-[#9A9490] mt-3 line-clamp-3">
+                        <p className="mt-3 line-clamp-3 text-sm text-[#9A9490]">
                           {item.excerpt}
                         </p>
-                        <p className="text-xs text-[#6A6460] mt-4">
+                        <p className="mt-4 text-xs text-[#6A6460]">
                           By {relatedAuthor.name}
                         </p>
                       </Link>
@@ -326,9 +378,9 @@ export default async function BlogPostPage({
             ) : null}
           </div>
 
-          <aside className="min-w-0 space-y-5 lg:max-w-[320px]">
+          <aside className="min-w-0 space-y-5 lg:block">
             <div className="rounded-2xl border border-border bg-bg-2 p-5 lg:sticky lg:top-6">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 Article details
               </p>
               <div className="space-y-3 text-sm text-[#B7B0AA]">
@@ -337,31 +389,34 @@ export default async function BlogPostPage({
                 </p>
                 <p>
                   <strong className="text-[#F0EDE8]">Updated:</strong>{' '}
-                  {formatDate(post.updated_at || post.created_at)}
+                  {formatDate(updatedDate)}
                 </p>
                 <p>
                   <strong className="text-[#F0EDE8]">Read time:</strong> {post.read_time}
                 </p>
                 <p>
-                  <strong className="text-[#F0EDE8]">Author:</strong> {author.name}
+                  <strong className="text-[#F0EDE8]">Author:</strong>{' '}
+                  <Link href={`/authors/${author.slug}`} rel="author" className="text-gold hover:opacity-80">
+                    {author.name}
+                  </Link>
                 </p>
               </div>
             </div>
 
             <div className="rounded-2xl border border-border bg-bg-2 p-5">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 Reviewed by
               </p>
-              <p className="text-sm text-[#B7B0AA] leading-relaxed">
+              <p className="text-sm leading-relaxed text-[#B7B0AA]">
                 <strong className="text-[#F0EDE8]">{fallbackAuthor.reviewerName}</strong> — {fallbackAuthor.reviewerBio}
               </p>
             </div>
 
             <div className="rounded-2xl border border-border bg-bg-2 p-5">
-              <p className="text-xs uppercase tracking-widest text-gold font-bold mb-3">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
                 Editorial standard
               </p>
-              <p className="text-sm text-[#B7B0AA] leading-relaxed">
+              <p className="text-sm leading-relaxed text-[#B7B0AA]">
                 CashClimb aims to publish clear, useful, beginner-friendly financial
                 education with responsible disclaimers and practical examples.
               </p>
