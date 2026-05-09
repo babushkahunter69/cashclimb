@@ -50,13 +50,6 @@ export default function Navbar() {
           >
             Editor Login
           </Link>
-
-          <Link
-            href="/blog"
-            className="border border-gold text-gold text-xs font-bold tracking-widest uppercase px-4 py-2 rounded transition-all hover:bg-gold hover:text-bg"
-          >
-            Read Guides
-          </Link>
         </div>
 
         <button
@@ -88,14 +81,6 @@ export default function Navbar() {
             className="text-sm font-medium text-[#9A9490] hover:text-gold transition-colors"
           >
             Editor Login
-          </Link>
-
-          <Link
-            href="/blog"
-            onClick={() => setOpen(false)}
-            className="text-xs font-bold tracking-widest uppercase text-gold border border-gold rounded px-4 py-2 text-center hover:bg-gold hover:text-bg transition-all"
-          >
-            Read Guides
           </Link>
         </div>
       )}
