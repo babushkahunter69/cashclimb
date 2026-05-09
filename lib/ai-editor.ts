@@ -441,7 +441,7 @@ Rules:
 - Rewrite ONLY the opening paragraph and the flagged paragraphs provided below.
 - Keep the topic and factual meaning intact.
 - Remove advisory, guaranteed-return, or overly prescriptive language.
-- Make the primary keyword appear naturally in the title and opening paragraph.
+- Use the primary keyword naturally once in the title or opening paragraph. Do not repeat the exact article title in body paragraphs or FAQ questions.
 - Do not rewrite the full article.
 - Keep HTML valid.
 - If a field does not need changes, still return a safe improved value.

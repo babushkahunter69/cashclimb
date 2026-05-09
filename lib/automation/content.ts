@@ -224,6 +224,49 @@ function list(items: string[]) {
   return `<ul>${items.map((item) => `<li>${item}</li>`).join('')}</ul>`
 }
 
+function resourceLinks(category: Category) {
+  const resources: Record<Category, { title: string; href: string }[]> = {
+    'Personal Finance': [
+      { title: 'CFPB consumer finance guides', href: 'https://www.consumerfinance.gov/consumer-tools/' },
+      { title: 'FDIC Money Smart', href: 'https://www.fdic.gov/resources/consumers/money-smart/' },
+    ],
+    Credit: [
+      { title: 'CFPB credit card resources', href: 'https://www.consumerfinance.gov/consumer-tools/credit-cards/' },
+      { title: 'FTC credit and debt guidance', href: 'https://consumer.ftc.gov/credit-loans-debt' },
+    ],
+    Investing: [
+      { title: 'SEC Investor.gov', href: 'https://www.investor.gov/' },
+      { title: 'FINRA investor education', href: 'https://www.finra.org/investors' },
+    ],
+    Retirement: [
+      { title: 'IRS retirement plans', href: 'https://www.irs.gov/retirement-plans' },
+      { title: 'SEC Investor.gov retirement resources', href: 'https://www.investor.gov/additional-resources/retirement-toolkit' },
+      { title: 'Social Security Administration', href: 'https://www.ssa.gov/' },
+    ],
+    Taxes: [
+      { title: 'IRS individuals', href: 'https://www.irs.gov/individuals' },
+      { title: 'IRS tax withholding estimator', href: 'https://www.irs.gov/individuals/tax-withholding-estimator' },
+    ],
+    'Real Estate': [
+      { title: 'CFPB buying a house', href: 'https://www.consumerfinance.gov/owning-a-home/' },
+      { title: 'HUD homebuying resources', href: 'https://www.hud.gov/topics/buying_a_home' },
+    ],
+  }
+  return `<ul>${resources[category].map((r) => `<li><a href=\"${r.href}\" target=\"_blank\" rel=\"noopener noreferrer\">${r.title}</a></li>`).join('')}</ul>`
+}
+
+function faqQuestions(category: Category) {
+  const faqs: Record<Category, string[]> = {
+    'Personal Finance': ['What should I review before changing my budget?', 'How do I know if a money move is too risky?', 'When should I get professional help?'],
+    Credit: ['Which credit card fees are easiest to avoid?', 'How can I reduce interest charges?', 'When should I get professional help?'],
+    Investing: ['How much investment risk is reasonable for beginners?', 'Should beginners avoid high-risk investments completely?', 'When should I get professional help?'],
+    Retirement: ['What should beginners review before opening a retirement account?', 'Should conservative investors avoid stocks completely?', 'When should I get professional help?'],
+    Taxes: ['What records should I check first?', 'When do tax rules change the decision?', 'When should I get professional help?'],
+    'Real Estate': ['What costs should buyers compare first?', 'How much risk is too much for a housing decision?', 'When should I get professional help?'],
+  }
+  return faqs[category]
+}
+
 export function buildArticleDraft(input: DraftInput) {
   const keyword = cleanKeyword(input.keyword)
   const category = input.category
@@ -238,27 +281,28 @@ export function buildArticleDraft(input: DraftInput) {
     ? paragraph('<em>This article is for general educational purposes and is not personal financial, investment, tax, or legal advice.</em>')
     : ''
 
+  const faq = faqQuestions(category)
   const html = [
     disclaimer,
-    paragraph(`This guide explains ${keyword} in plain language so you can make a more informed decision without getting lost in jargon. The goal is not to push one perfect answer. The goal is to help you understand the tradeoffs, compare your options, and choose a practical next step.`),
+    paragraph(`This guide explains the main choices, costs, and risks to compare before making a decision. The goal is not to chase a perfect answer. It is to help you understand the tradeoffs and choose a step that fits your cash flow, timeline, and comfort with risk.`),
     '<h2>Key Takeaways</h2>',
     list([
-      `${sentenceCase(keyword)} works best when you compare costs, timing, risk, and your current cash flow together.`,
-      'The safest approach is usually a simple checklist, not a rushed decision based on one headline number.',
-      `Before acting on ${keyword}, review reliable sources and consider speaking with a qualified professional for personal situations.`,
+      'Start by comparing costs, timing, risk, and current cash flow together.',
+      'Use a simple checklist before acting instead of relying on one headline number.',
+      'Check current rules from reliable sources when the decision involves taxes, credit, investing, retirement, or housing.',
     ]),
-    `<h2>What ${keyword} means</h2>`,
-    paragraph(`${sentenceCase(keyword)} is a decision area where small details can change the outcome. Fees, interest rates, account rules, tax treatment, deadlines, and timing can all matter. A strong article or plan should explain these details clearly instead of making broad promises.`),
-    paragraph(`For CashClimb readers, the useful question is simple: what action can improve your position without creating unnecessary risk? That framing keeps the advice practical, especially for beginners.`),
+    '<h2>What this means</h2>',
+    paragraph('Small details can change the outcome. Fees, interest rates, account rules, tax treatment, deadlines, and timing may all matter. A useful plan explains those details clearly instead of making broad promises.'),
+    paragraph('The practical question is simple: what action improves your position without creating a bigger problem later? That keeps the advice grounded and easier to act on.'),
     '<h2>A simple framework to use</h2>',
     list([
-      'Define the goal: saving money, reducing risk, improving cash flow, building credit, or planning ahead.',
-      'Gather your numbers: income, expenses, debt balances, rates, deadlines, account limits, and fees.',
-      'Compare the tradeoffs: speed, safety, flexibility, taxes, and long-term impact.',
+      'Define the goal: save money, reduce risk, improve cash flow, build credit, or plan ahead.',
+      'Gather your numbers: income, expenses, balances, rates, deadlines, account limits, and fees.',
+      'Compare speed, safety, flexibility, taxes, and long-term impact.',
       'Choose one next step that can be completed this week.',
-      'Review the outcome and adjust before making bigger moves.',
+      'Review the result before making bigger moves.',
     ]),
-    paragraph(`For example, if two choices look similar, the better option may depend on a fee, a deadline, or how easily you can reverse the decision later. That is why a checklist often beats a quick guess.`),
+    paragraph('For example, if two choices look similar, the better option may depend on a fee, a deadline, or how easily you can reverse the decision later. That is why a checklist often beats a quick guess.'),
     '<h2>Common mistakes to avoid</h2>',
     list([
       'Making a decision before knowing the full cost.',
@@ -267,21 +311,19 @@ export function buildArticleDraft(input: DraftInput) {
       'Ignoring taxes, fees, or account rules.',
       'Assuming an outcome is guaranteed.',
     ]),
-    '<h2>Data and sources to verify</h2>',
-    paragraph(`Before publishing or updating this guide, verify current rules and statistics using sources such as ${citations.join(', ')}. This gives the article stronger trust signals and helps avoid stale or unsupported claims.`),
-    '<h2>Tools and accounts that can help</h2>',
-    paragraph('The right tool will not solve the whole problem for you, but it can make the next step easier. Compare costs, safety, features, and account rules before you commit.'),
-    list(toolIdeas(category)),
-    paragraph('<em>Editorial note: this section is educational and is meant to help you compare categories of tools or accounts, not to push a specific provider.</em>'),
+    '<h2>What to verify before acting</h2>',
+    paragraph(`Check current rules and data from reliable sources such as ${citations.join(', ')}. This helps avoid stale advice and unsupported claims.`),
+    '<h2>Helpful official resources</h2>',
+    resourceLinks(category),
     '<h2>FAQ</h2>',
-    `<h3>Is ${keyword} the same for everyone?</h3>`,
-    paragraph('No. The right choice depends on your income, timeline, location, risk tolerance, account rules, and current obligations.'),
-    `<h3>What should I check first with ${keyword}?</h3>`,
-    paragraph('Start with the cost, timing, risk, and whether the decision affects taxes, credit, or long-term flexibility.'),
-    '<h3>When should I get professional help?</h3>',
+    `<h3>${faq[0]}</h3>`,
+    paragraph('Start with the costs, timing, risks, and rules that could change the outcome. Then compare the safest realistic options side by side.'),
+    `<h3>${faq[1]}</h3>`,
+    paragraph('Risk is too high when the decision could damage essential expenses, emergency savings, credit, tax position, or long-term flexibility.'),
+    `<h3>${faq[2]}</h3>`,
     paragraph('Consider professional help when a decision involves taxes, investments, legal documents, large debt balances, home purchases, retirement accounts, or business income.'),
-    '<h2>What you can do next</h2>',
-    paragraph(`Write down one decision related to ${keyword}, gather the numbers, and compare the tradeoffs before taking action. A small, well-informed step is better than a rushed move that creates new problems.`),
+    '<h2>Next steps</h2>',
+    paragraph('Pick one practical decision, gather the numbers, and compare the tradeoffs before acting. A small, well-informed step is better than a rushed move that creates new problems.'),
   ].filter(Boolean).join('\n')
 
   const readTime = readingTime(html.replace(/<[^>]*>/g, ' ')).text

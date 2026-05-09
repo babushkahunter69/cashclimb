@@ -204,7 +204,7 @@ function ensureOpeningKeyword(html: any, keyword: string) {
   if (plain.slice(0, 600).includes(safeKeyword)) return safeHtml
 
   return `${p(
-    `This guide focuses on ${keyword} and explains the practical choices, risks, costs, and next steps CashClimb readers can compare before taking action.`
+    'This guide explains the practical choices, risks, costs, and next steps to compare before taking action.'
   )}\n${safeHtml}`
 }
 
@@ -230,7 +230,7 @@ function ensureKeyTakeaways(html: any, keyword: string) {
   }
 
   return `${safeHtml}\n<h2>Key Takeaways</h2>\n${list([
-    `${titleCase(keyword)} works best when you compare costs, timing, risk, and flexibility together.`,
+    'This works best when you compare costs, timing, risk, and flexibility together.',
     'A simple checklist usually beats a rushed decision based on one number.',
     'Review reliable sources and consider qualified help before making tax, legal, investing, or major borrowing decisions.',
   ])}`
@@ -303,7 +303,7 @@ function ensureDepth(html: any, keyword: string, category: Category) {
     'How to compare your options',
     [
       p(
-        `A practical way to approach ${keyword} is to compare choices side by side. Look at the immediate cost, the long-term cost, the risk if your situation changes, and the amount of flexibility you keep. This matters because a decision that looks good in one month can become expensive if fees, interest rates, taxes, or deadlines are ignored.`
+        'A practical way to approach the decision is to compare choices side by side. Look at the immediate cost, the long-term cost, the risk if your situation changes, and the amount of flexibility you keep. A decision that looks good in one month can become expensive if fees, interest rates, taxes, or deadlines are ignored.'
       ),
       list([
         'Write down the goal before comparing products, accounts, or strategies.',
@@ -351,8 +351,8 @@ function ensureH2Structure(html: any, keyword: string) {
 
   out = appendMissingSection(
     out,
-    `What ${keyword} means`,
-    p(`${titleCase(keyword)} is easier to evaluate when you separate the goal, the cost, the timing, and the risks.`)
+    'What this means',
+    p('The decision is easier to evaluate when you separate the goal, the cost, the timing, and the risks.')
   )
 
   out = appendMissingSection(

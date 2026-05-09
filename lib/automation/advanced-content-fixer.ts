@@ -135,7 +135,7 @@ function buildDepthSections(html: string, keyword: string, category: Category) {
     out,
     'How to compare the tradeoffs',
     [
-      p(`A stronger decision starts with the tradeoffs behind ${keyword}. Do not compare only the most attractive number. Compare the cost, timeline, risk, flexibility, and the amount of effort required to keep the plan working.`),
+      p('A stronger decision starts with the tradeoffs. Do not compare only the most attractive number. Compare the cost, timeline, risk, flexibility, and the amount of effort required to keep the plan working.'),
       list([
         'Cost: check upfront fees, recurring costs, interest, taxes, penalties, and opportunity cost.',
         'Timeline: decide whether the choice needs to work for weeks, years, or decades.',
@@ -156,7 +156,7 @@ function buildDepthSections(html: string, keyword: string, category: Category) {
     out,
     'Common mistakes to avoid',
     [
-      p(`Many readers make ${keyword} harder by treating a general rule like a personal recommendation. A rule of thumb can be useful, but it should still be checked against income, debts, tax position, account rules, location, and time horizon.`),
+      p('Many readers make the decision harder by treating a general rule like a personal recommendation. A rule of thumb can be useful, but it should still be checked against income, debts, tax position, account rules, location, and time horizon.'),
       list([
         'Choosing the lowest monthly payment without checking total cost.',
         'Ignoring how fees, taxes, rates, or deadlines change the real outcome.',
@@ -171,7 +171,7 @@ function buildDepthSections(html: string, keyword: string, category: Category) {
     out,
     'A practical review checklist',
     [
-      p(`Use this checklist before treating ${keyword} as finished. The goal is not to find a perfect answer. The goal is to remove obvious risks and make the next step easier to explain.`),
+      p('Use this checklist before treating the decision as finished. The goal is not to find a perfect answer. The goal is to remove obvious risks and make the next step easier to explain.'),
       list([
         'Write the exact decision in one sentence.',
         'List the numbers needed to compare the options fairly.',
@@ -186,7 +186,7 @@ function buildDepthSections(html: string, keyword: string, category: Category) {
     out,
     'What to verify before acting',
     [
-      p(`Before making a decision based on ${keyword}, verify anything that can change. Rates, tax thresholds, account limits, government rules, and lender policies can become outdated quickly. A good article should point readers toward current sources rather than pretending one static answer fits every case.`),
+      p('Before acting, verify anything that can change. Rates, tax thresholds, account limits, government rules, and lender policies can become outdated quickly. A good article points readers toward current sources rather than pretending one static answer fits every case.'),
       p('For CashClimb, this is also an editorial quality step. Articles should explain the decision clearly, avoid promises, show the tradeoffs, and leave room for professional advice when the topic involves taxes, investing, property, retirement, or legal documents.'),
     ].join('\n')
   )
@@ -293,7 +293,7 @@ export async function fixPostContentDepthAndTone(postId: string): Promise<FixRes
       body,
       'How CashClimb readers can use this guide',
       [
-        p(`The most useful way to use this ${keyword} guide is to turn it into a decision note. Write the choice at the top, list the numbers you know, list the information you still need, and mark anything that requires a current source or professional review.`),
+        p('The most useful way to use this guide is to turn it into a decision note. Write the choice at the top, list the numbers you know, list the information you still need, and mark anything that requires a current source or professional review.'),
         p('This keeps the article practical without becoming personal advice. It also makes the content more useful for readers because the next step is clear, cautious, and based on comparison rather than pressure.'),
       ].join('\n')
     )
