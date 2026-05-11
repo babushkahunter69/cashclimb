@@ -3,7 +3,6 @@ import { createAdminClient } from '@/lib/supabase-server'
 import { cleanupExternalLinks } from '@/lib/normalize-links'
 
 export const dynamic = 'force-dynamic'
-export const revalidate = 0
 
 export async function POST() {
   try {
@@ -24,34 +23,29 @@ export async function POST() {
     let updated = 0
 
     for (const post of posts || []) {
-      scanned += 1
+      scanned++
 
-      const currentBody = String(post.body || '')
-      const cleanedBody = await cleanupExternalLinks(currentBody, {
+      const originalBody = String(post.body || '')
+      const cleanedBody = await cleanupExternalLinks(originalBody, {
         validateExternal: true,
         removeInvalid: true,
-        replaceKnownBad: true,
+        rehydratePlainSources: true,
       })
 
-      if (cleanedBody !== currentBody) {
+      if (cleanedBody !== originalBody) {
         const { error: updateError } = await supabase
           .from('posts')
           .update({ body: cleanedBody })
           .eq('id', post.id)
 
-        if (updateError) throw updateError
-        updated += 1
+        if (!updateError) updated++
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      scanned,
-      updated,
-    })
-  } catch (error: any) {
+    return NextResponse.json({ success: true, scanned, updated })
+  } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: error?.message || 'Link cleanup failed' },
+      { success: false, error: err.message || 'Link cleanup failed' },
       { status: 500 }
     )
   }
