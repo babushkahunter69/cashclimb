@@ -371,3 +371,21 @@ select {
     display: none;
   }
 }
+/* Mobile hero polish */
+@media (max-width: 767px) {
+  .ticker-mask::before,
+  .ticker-mask::after {
+    display: none;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .cc-btn-primary,
+  .cc-btn-ghost {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}

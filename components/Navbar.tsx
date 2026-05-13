@@ -18,8 +18,8 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group">
+      <div className="max-w-7xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 group" onClick={() => setOpen(false)}>
           <div
             className="w-8 h-8 bg-gold flex items-center justify-center text-bg font-black text-sm"
             style={{ clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)' }}
@@ -50,38 +50,58 @@ export default function Navbar() {
           >
             Editor Login
           </Link>
+
+          <Link
+            href="/blog"
+            className="border border-gold text-gold text-xs font-bold tracking-widest uppercase px-4 py-2 rounded transition-all hover:bg-gold hover:text-bg"
+          >
+            Read Guides
+          </Link>
         </div>
 
         <button
-          className="md:hidden text-[#F0EDE8] text-2xl"
+          className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-border text-[#F0EDE8] text-2xl leading-none"
           onClick={() => setOpen((o) => !o)}
-          aria-label="Toggle menu"
+          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-expanded={open}
           type="button"
         >
-          {open ? 'x' : '☰'}
+          {open ? '×' : '☰'}
         </button>
       </div>
 
       {open && (
-        <div className="md:hidden bg-bg-2 border-b border-border px-6 py-4 flex flex-col gap-4">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="text-sm font-medium text-[#9A9490] hover:text-gold transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="md:hidden bg-bg-2 border-b border-border px-5 py-4">
+          <div className="grid gap-2">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={`rounded-lg px-3 py-3 text-sm font-medium transition-colors ${
+                  pathname === link.href ? 'bg-bg-3 text-gold' : 'text-[#C8C0B9] hover:bg-bg-3 hover:text-gold'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
 
-          <Link
-            href="/admin/login?from=%2Fadmin"
-            onClick={() => setOpen(false)}
-            className="text-sm font-medium text-[#9A9490] hover:text-gold transition-colors"
-          >
-            Editor Login
-          </Link>
+            <Link
+              href="/admin/login?from=%2Fadmin"
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-3 py-3 text-sm font-medium text-[#C8C0B9] hover:bg-bg-3 hover:text-gold transition-colors"
+            >
+              Editor Login
+            </Link>
+
+            <Link
+              href="/blog"
+              onClick={() => setOpen(false)}
+              className="mt-2 text-xs font-bold tracking-widest uppercase text-gold border border-gold rounded-lg px-4 py-3 text-center hover:bg-gold hover:text-bg transition-all"
+            >
+              Read Guides
+            </Link>
+          </div>
         </div>
       )}
     </nav>
