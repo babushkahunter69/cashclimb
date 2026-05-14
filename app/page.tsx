@@ -81,21 +81,21 @@ export default async function HomePage() {
 
       <section className="relative overflow-hidden border-b border-border bg-bg">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(212,175,55,0.07),transparent)]" />
-        <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
+        <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
           <div>
-            <p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-gold">
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.20em] text-gold sm:text-xs sm:tracking-[0.24em]">
               Independent financial education
             </p>
 
-            <h1 className="max-w-4xl font-serif text-5xl font-black leading-[1.04] text-[#F0EDE8] lg:text-6xl">
+            <h1 className="max-w-[11ch] font-serif text-[3.35rem] font-black leading-[0.98] text-[#F0EDE8] sm:max-w-4xl sm:text-5xl sm:leading-[1.04] lg:text-6xl">
               Make smarter money decisions without second guessing every step.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#B7B0AA]">
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-[#B7B0AA] sm:mt-6 sm:text-lg">
               Clear guides on credit, investing, debt, retirement, property, and everyday money choices, written for readers who want practical next steps.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-6 flex flex-wrap gap-3 sm:mt-8 sm:gap-4">
               <Link href="/blog" className="cc-btn-primary inline-block">
                 Browse guides
               </Link>
@@ -104,7 +104,7 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#9A9490]">
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#9A9490] sm:mt-8">
               {['No sponsored rankings', 'No ads or paywalls', 'Reviewed for clarity'].map((item) => (
                 <span key={item} className="inline-flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-gold" />
@@ -114,7 +114,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative lg:max-w-xl lg:justify-self-end">
+          <div className="relative hidden lg:block lg:max-w-xl lg:justify-self-end">
             <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-bg-2/70 shadow-xl">
               <div className="relative aspect-[16/9]">
                 <Image
