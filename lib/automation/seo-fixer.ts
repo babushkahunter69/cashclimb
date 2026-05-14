@@ -2,6 +2,7 @@ import readingTime from 'reading-time'
 import { createAdminClient } from '@/lib/supabase-server'
 import { evaluateFinanceArticle, nextStatusFromEvaluation } from '@/lib/editorial-workflow'
 import type { Category, WorkflowEvaluation } from '@/types'
+import { cleanSeoTitle } from '@/lib/seo/clean-title'
 
 const CATEGORY_VALUES: Category[] = [
   'Investing',
@@ -488,7 +489,7 @@ export async function fixPostSeoIssues(postId: string): Promise<FixResult> {
   )
 
   let seoTitle = ensureRange(
-    post.seo_title || title,
+    cleanSeoTitle(post.seo_title || title),
     40,
     65,
     `${titleCase(keyword)} Guide`

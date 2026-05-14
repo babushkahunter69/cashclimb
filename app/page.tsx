@@ -7,19 +7,22 @@ import Link from 'next/link'
 import type { Post } from '@/types'
 import { getAuthorByName, resolvePostAuthorName } from '@/lib/authors'
 import type { Metadata } from 'next'
+import Image from 'next/image'
+import { displayTitle } from '@/lib/seo/clean-title'
+import { localizeCoverUrl } from '@/lib/images'
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
 const socialImage = '/opengraph-image'
 
 export const metadata: Metadata = {
-  title: 'CashClimb — Personal Finance & Investing Intelligence',
+  title: 'CashClimb: Personal Finance and Investing Guides',
   description:
     'Clear, jargon-free financial insights on investing, personal finance, credit, and wealth-building for people who take their financial future seriously.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'CashClimb — Personal Finance & Investing Intelligence',
+    title: 'CashClimb: Personal Finance and Investing Guides',
     description:
       'Clear, jargon-free financial insights on investing, personal finance, credit, and wealth-building for people who take their financial future seriously.',
     url: siteUrl,
@@ -28,7 +31,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CashClimb — Personal Finance & Investing Intelligence',
+    title: 'CashClimb: Personal Finance and Investing Guides',
     description:
       'Clear, jargon-free financial insights on investing, personal finance, credit, and wealth-building for people who take their financial future seriously.',
     images: [socialImage],
@@ -76,173 +79,112 @@ export default async function HomePage() {
       <Navbar />
       <Ticker />
 
-      <section className="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-        <div>
-          <p className="text-xs font-bold tracking-[0.2em] uppercase text-gold mb-4">
-            Independent Financial Education
-          </p>
+      <section className="relative overflow-hidden border-b border-border bg-bg">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[linear-gradient(180deg,rgba(212,175,55,0.07),transparent)]" />
+        <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
+          <div>
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-gold">
+              Independent financial education
+            </p>
 
-          <h1 className="font-serif text-5xl lg:text-6xl font-black leading-[1.08] mb-6">
-            Clear financial guidance that feels credible before it feels clever.
-          </h1>
+            <h1 className="max-w-4xl font-serif text-5xl font-black leading-[1.04] text-[#F0EDE8] lg:text-6xl">
+              Make smarter money decisions without second guessing every step.
+            </h1>
 
-          <p className="text-[#9A9490] text-lg leading-relaxed mb-8 max-w-xl">
-            CashClimb helps readers make smarter decisions about investing,
-            debt, retirement, and long-term wealth building with practical,
-            plain-English guidance and transparent editorial standards.
-          </p>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#B7B0AA]">
+              Clear guides on credit, investing, debt, retirement, property, and everyday money choices, written for readers who want practical next steps.
+            </p>
 
-          <div className="flex gap-4 flex-wrap mb-6">
-            <Link href="/blog" className="cc-btn-primary inline-block">
-              Explore Trusted Guides
-            </Link>
-            <Link href="/editorial-standards" className="cc-btn-ghost inline-block">
-              See Editorial Standards
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              'No sponsored rankings',
-              'No ads or paywalls',
-              'Reviewed for clarity',
-              'Plain-English guidance',
-            ].map((item) => (
-              <div
-                key={item}
-                className="bg-bg-2 border border-border rounded-xl px-4 py-3 text-sm text-[#F0EDE8]"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-4">
-          <div className="bg-bg-2 border border-border rounded-2xl p-8">
-            <div className="flex gap-2 mb-4 flex-wrap">
-              <span className="cat-badge bg-gold text-bg">Featured Guide</span>
-              {heroPost && (
-                <span
-                  className="cat-badge"
-                  style={{
-                    background: `${CAT_COLORS[heroPost.category]}22`,
-                    color: CAT_COLORS[heroPost.category],
-                  }}
-                >
-                  {heroPost.category}
-                </span>
-              )}
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link href="/blog" className="cc-btn-primary inline-block">
+                Browse guides
+              </Link>
+              <Link href="/editorial-standards" className="cc-btn-ghost inline-block">
+                Editorial standards
+              </Link>
             </div>
 
-            {heroPost ? (
-              <>
-                <h2 className="font-serif text-3xl font-bold leading-snug text-[#F0EDE8] mb-4">
-                  {heroPost.title}
-                </h2>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#9A9490]">
+              {['No sponsored rankings', 'No ads or paywalls', 'Reviewed for clarity'].map((item) => (
+                <span key={item} className="inline-flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
 
-                <p className="text-[#9A9490] leading-relaxed mb-6">
-                  {heroPost.excerpt}
-                </p>
+          <div className="relative lg:max-w-xl lg:justify-self-end">
+            <div className="relative overflow-hidden rounded-[1.75rem] border border-border bg-bg-2/70 shadow-xl">
+              <div className="relative aspect-[16/9]">
+                <Image
+                  src={localizeCoverUrl(heroPost?.cover_url, heroPost?.category)}
+                  alt={heroPost ? displayTitle(heroPost.title) : 'CashClimb financial guide visual'}
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </div>
 
-                <div className="grid grid-cols-2 gap-3 text-sm mb-6">
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Author</div>
-                    <div className="text-[#F0EDE8] font-semibold">
-                      {heroAuthor?.name || 'CashClimb Editorial'}
-                    </div>
-                  </div>
-
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Updated</div>
-                    <div className="text-[#F0EDE8] font-semibold">
-                      {formatDate(heroPost.updated_at || heroPost.created_at)}
-                    </div>
-                  </div>
-
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Reading time</div>
-                    <div className="text-[#F0EDE8] font-semibold">
-                      {heroPost.read_time}
-                    </div>
-                  </div>
-
-                  <div className="bg-bg border border-border rounded-xl p-4">
-                    <div className="text-[#6A6460] mb-1">Review status</div>
-                    <div className="text-gold font-semibold">Reviewed</div>
-                  </div>
+              <div className="p-7">
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <span className="cat-badge bg-gold text-bg">Featured guide</span>
+                  {heroPost ? (
+                    <span
+                      className="cat-badge"
+                      style={{
+                        background: `${CAT_COLORS[heroPost.category]}22`,
+                        color: CAT_COLORS[heroPost.category],
+                      }}
+                    >
+                      {heroPost.category}
+                    </span>
+                  ) : null}
                 </div>
 
-                <Link
-                  href={`/blog/${heroPost.slug}`}
-                  className="text-gold font-bold text-sm inline-flex items-center gap-2 hover:text-gold-light transition-colors"
-                >
-                  Read Featured Guide →
-                </Link>
-              </>
-            ) : (
-              <>
-                <h2 className="font-serif text-3xl font-bold leading-snug text-[#F0EDE8] mb-4">
-                  Thoughtful personal finance guidance, built for trust.
+                <h2 className="font-serif text-xl font-bold leading-snug text-[#F0EDE8] sm:text-2xl">
+                  {heroPost ? displayTitle(heroPost.title) : 'Thoughtful personal finance guidance, built for trust.'}
                 </h2>
-                <p className="text-[#9A9490] leading-relaxed">
-                  Publish your first reviewed guide to highlight it here.
+
+                <p className="mt-3 text-sm leading-relaxed text-[#B7B0AA]">
+                  {heroPost?.excerpt || 'Publish your first reviewed guide to highlight it here.'}
                 </p>
-              </>
-            )}
-          </div>
 
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="bg-bg-2 border border-border rounded-xl p-5">
-              <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
-                What readers need
-              </div>
-              <div className="text-sm text-[#F0EDE8]">
-                Clear, useful explanations
-              </div>
-            </div>
-
-            <Link
-              href="/editorial-standards"
-              className="bg-bg-2 border border-border rounded-xl p-5 hover:border-gold transition-colors"
-            >
-              <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
-                What builds trust
-              </div>
-              <div className="text-sm text-[#F0EDE8]">
-                Visible editorial standards
-              </div>
-            </Link>
-
-            <div className="bg-bg-2 border border-border rounded-xl p-5">
-              <div className="text-xs font-bold tracking-widest uppercase text-gold mb-2">
-                What makes it useful
-              </div>
-              <div className="text-sm text-[#F0EDE8]">
-                Articles plus practical tools
+                {heroPost ? (
+                  <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-5 text-sm text-[#9A9490]">
+                    <span>By {heroAuthor?.name || 'CashClimb Editorial'}</span>
+                    <span>{formatDate(heroPost.updated_at || heroPost.created_at)}</span>
+                    <span>{heroPost.read_time}</span>
+                    <Link href={`/blog/${heroPost.slug}`} className="font-semibold text-gold hover:text-gold-light">
+                      Read guide
+                    </Link>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-bg-2">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <p className="text-xs font-bold tracking-widest uppercase text-gold mb-5">
-            How CashClimb Works
-          </p>
+      <section className="border-y border-border bg-bg-2/60">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-gold">
+              How CashClimb works
+            </p>
+            <h2 className="mt-3 font-serif text-3xl font-bold text-[#F0EDE8]">
+              Useful first, polished second.
+            </h2>
+          </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid gap-5 sm:grid-cols-2">
             {[
-              'Every guide should answer a real financial decision',
-              'Content is updated when conditions materially change',
-              'No sponsored placements or paid rankings',
-              'Written for clarity, not complexity',
+              'Every guide answers a real financial decision.',
+              'Content is updated when conditions materially change.',
+              'No sponsored placements or paid rankings.',
+              'Written for clarity, not complexity.',
             ].map((item) => (
-              <div
-                key={item}
-                className="border border-border rounded-xl p-5 text-sm text-[#9A9490] bg-bg"
-              >
+              <div key={item} className="border-t border-border pt-4 text-sm leading-relaxed text-[#B7B0AA]">
                 {item}
               </div>
             ))}

@@ -21,8 +21,8 @@ const socialImage = '/opengraph-image'
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'CashClimb — Personal Finance & Investing Intelligence',
-    template: '%s | CashClimb',
+    default: 'CashClimb: Personal Finance and Investing Guides',
+    template: '%s',
   },
   description:
     'Clear, jargon-free financial insights on investing, personal finance, credit, and wealth-building for people who take their financial future seriously.',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     siteName: 'CashClimb',
-    title: 'CashClimb — Personal Finance & Investing Intelligence',
+    title: 'CashClimb: Personal Finance and Investing Guides',
     description:
       'Clear, jargon-free financial insights on investing, personal finance, credit, and wealth-building for people who take their financial future seriously.',
     images: [{ url: socialImage, width: 1200, height: 630, alt: 'CashClimb' }],
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     site: '@cashclimb',
-    title: 'CashClimb — Personal Finance & Investing Intelligence',
+    title: 'CashClimb: Personal Finance and Investing Guides',
     description:
       'Clear, jargon-free financial insights on investing, personal finance, credit, and wealth-building for people who take their financial future seriously.',
     images: [socialImage],

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getAuthorByName, resolvePostAuthorName } from '@/lib/authors'
 import type { Post } from '@/types'
+import { displayTitle } from '@/lib/seo/clean-title'
+import { localizeCoverUrl } from '@/lib/images'
 
 const CAT_COLORS: Record<string, string> = {
   Investing: '#D4AF37',
@@ -42,14 +44,16 @@ function getUseCase(category: string) {
 export default function PostCard({ post }: { post: Post }) {
   const color = CAT_COLORS[post.category] ?? '#888'
   const author = getAuthorByName(resolvePostAuthorName(post))
+  const title = displayTitle(post.title)
+  const coverUrl = localizeCoverUrl(post.cover_url, post.category)
 
   return (
     <article className="post-card flex flex-col group overflow-hidden">
       <Link href={`/blog/${post.slug}`} className="block h-44 relative bg-gradient-to-br from-[#0D1A14] to-[#1A1000] flex-shrink-0 overflow-hidden">
-        {post.cover_url ? (
+        {coverUrl ? (
           <Image
-            src={post.cover_url}
-            alt={post.title}
+            src={coverUrl}
+            alt={title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
@@ -64,7 +68,7 @@ export default function PostCard({ post }: { post: Post }) {
               }}
             />
             <span className="font-serif text-5xl font-black text-gold opacity-20">
-              {post.title[0]}
+              {title[0]}
             </span>
           </div>
         )}
@@ -89,7 +93,7 @@ export default function PostCard({ post }: { post: Post }) {
 
         <h3 className="font-serif text-lg font-bold leading-snug mb-2 text-[#F0EDE8]">
           <Link href={`/blog/${post.slug}`} className="hover:text-gold transition-colors">
-            {post.title}
+            {title}
           </Link>
         </h3>
 

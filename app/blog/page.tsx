@@ -70,8 +70,8 @@ export default async function BlogPage({ searchParams }: Props) {
     <>
       <Navbar />
 
-      <div className="bg-bg-2 border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-14">
+      <div className="border-b border-border bg-[radial-gradient(circle_at_15%_0%,rgba(212,175,55,0.12),transparent_32%)]">
+        <div className="max-w-7xl mx-auto px-6 py-16">
           <p className="text-xs font-bold tracking-widest uppercase text-gold mb-3">
             Article Library
           </p>

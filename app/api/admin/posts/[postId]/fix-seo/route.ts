@@ -3,6 +3,7 @@ import readingTime from 'reading-time'
 import { createAdminClient } from '@/lib/supabase-server'
 import { evaluateFinanceArticle } from '@/lib/editorial-workflow'
 import { cleanupExternalLinks } from '@/lib/normalize-links'
+import { cleanSeoTitle } from '@/lib/seo/clean-title'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -44,9 +45,9 @@ function fixExcerpt(post: any, title: string) {
 }
 
 function fixSeoTitle(post: any, title: string) {
-  const current = removeGenericSuffix(post.seo_title)
+  const current = cleanSeoTitle(removeGenericSuffix(post.seo_title))
   if (current.length >= 40 && current.length <= 65) return current
-  return trimTo(title, 65)
+  return trimTo(cleanSeoTitle(title), 65)
 }
 
 function fixSeoDescription(post: any, excerpt: string) {

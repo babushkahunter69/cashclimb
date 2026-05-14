@@ -350,27 +350,6 @@ select {
   }
 }
 
-.ticker-animate {
-  width: max-content;
-  will-change: transform;
-  animation: ticker-scroll 42s linear infinite;
-}
-
-.ticker-animate:hover {
-  animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ticker-animate {
-    animation: none;
-    transform: translateX(0);
-  }
-
-  .ticker-mask::before,
-  .ticker-mask::after {
-    display: none;
-  }
-}
 /* Mobile hero polish */
 @media (max-width: 767px) {
   .ticker-mask::before,

@@ -144,36 +144,12 @@ const TOPIC_BANK: Record<Category, string[]> = {
 }
 
 const DEFAULT_STOCK_COVERS: Record<Category, string[]> = {
-  'Personal Finance': [
-    'https://images.pexels.com/photos/5942583/pexels-photo-5942583.jpeg?cs=srgb&dl=pexels-karola-g-5942583.jpg&fm=jpg',
-    'https://images.pexels.com/photos/4386370/pexels-photo-4386370.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    'https://images.pexels.com/photos/4968630/pexels-photo-4968630.jpeg?auto=compress&cs=tinysrgb&w=1600',
-  ],
-  Credit: [
-    'https://images.pexels.com/photos/6609234/pexels-photo-6609234.jpeg?cs=srgb&dl=pexels-mikhail-nilov-6609234.jpg&fm=jpg',
-    'https://images.pexels.com/photos/7821487/pexels-photo-7821487.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    'https://images.pexels.com/photos/3943728/pexels-photo-3943728.jpeg?auto=compress&cs=tinysrgb&w=1600',
-  ],
-  Retirement: [
-    'https://images.pexels.com/photos/5591267/pexels-photo-5591267.jpeg?cs=srgb&dl=pexels-tima-miroshnichenko-5591267.jpg&fm=jpg',
-    'https://images.pexels.com/photos/3760067/pexels-photo-3760067.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    'https://images.pexels.com/photos/4050291/pexels-photo-4050291.jpeg?auto=compress&cs=tinysrgb&w=1600',
-  ],
-  Investing: [
-    'https://images.pexels.com/photos/5717758/pexels-photo-5717758.jpeg?cs=srgb&dl=pexels-karola-g-5717758.jpg&fm=jpg',
-    'https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    'https://images.pexels.com/photos/6770775/pexels-photo-6770775.jpeg?auto=compress&cs=tinysrgb&w=1600',
-  ],
-  Taxes: [
-    'https://images.pexels.com/photos/6863332/pexels-photo-6863332.jpeg?cs=srgb&dl=pexels-n-voitkevich-6863332.jpg&fm=jpg',
-    'https://images.pexels.com/photos/4386366/pexels-photo-4386366.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    'https://images.pexels.com/photos/6694543/pexels-photo-6694543.jpeg?auto=compress&cs=tinysrgb&w=1600',
-  ],
-  'Real Estate': [
-    'https://images.pexels.com/photos/34135038/pexels-photo-34135038.jpeg?cs=srgb&dl=pexels-jakubzerdzicki-34135038.jpg&fm=jpg',
-    'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1600',
-    'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=1600',
-  ],
+  'Personal Finance': ['/images/blog/personal-finance.svg'],
+  Credit: ['/images/blog/credit.svg'],
+  Retirement: ['/images/blog/retirement.svg'],
+  Investing: ['/images/blog/investing.svg'],
+  Taxes: ['/images/blog/taxes.svg'],
+  'Real Estate': ['/images/blog/real-estate.svg'],
 }
 
 

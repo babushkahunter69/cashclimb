@@ -11,6 +11,8 @@ import { createAdminClient } from '@/lib/supabase-server'
 import { getAuthorByName, resolvePostAuthorName } from '@/lib/authors'
 import { getAutoAuthor } from '@/lib/seo-authors'
 import { normalizeLinksInHtml } from '@/lib/normalize-links'
+import { cleanSeoTitle, displayTitle } from '@/lib/seo/clean-title'
+import { localizeCoverUrl } from '@/lib/images'
 import type { Post } from '@/types'
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
@@ -70,12 +72,12 @@ export async function generateMetadata({
   if (!post) return {}
 
   const url = `${siteUrl}/blog/${post.slug}`
-  const image = post.cover_url || `${siteUrl}/opengraph-image`
+  const image = localizeCoverUrl(post.cover_url, post.category) || `${siteUrl}/opengraph-image`
   const description = (post as any).seo_description || post.excerpt
-  const title = (post as any).seo_title || post.title
+  const title = cleanSeoTitle((post as any).seo_title || post.title)
 
   return {
-    title: `${title} | CashClimb`,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: url,
@@ -112,7 +114,7 @@ export default async function BlogPostPage({
   const author = getAuthorByName(authorName)
   const relatedPosts = await getRelatedPosts(post)
   const articleUrl = `${siteUrl}/blog/${post.slug}`
-  const image = post.cover_url || `${siteUrl}/opengraph-image`
+  const image = localizeCoverUrl(post.cover_url, post.category) || `${siteUrl}/opengraph-image`
   const cleanBody = normalizeLinksInHtml(post.body || '')
   const plainBody = stripHtml(cleanBody)
   const updatedDate = post.updated_at || post.created_at
@@ -167,7 +169,7 @@ export default async function BlogPostPage({
         '@type': 'Article',
         '@id': `${articleUrl}#article`,
         mainEntityOfPage: articleUrl,
-        headline: post.title,
+        headline: displayTitle(post.title),
         description: post.excerpt,
         image,
         articleSection: post.category,
@@ -187,7 +189,7 @@ export default async function BlogPostPage({
         mainEntity: [
           {
             '@type': 'Question',
-            name: `Is ${post.title} financial advice?`,
+            name: `Is ${displayTitle(post.title)} financial advice?`,
             acceptedAnswer: {
               '@type': 'Answer',
               text: 'No. CashClimb content is for informational and educational purposes only and should not be treated as personal financial advice.',
@@ -233,7 +235,7 @@ export default async function BlogPostPage({
               </div>
 
               <h1 className="mt-4 max-w-4xl break-words font-serif text-4xl font-black leading-tight text-[#F0EDE8] md:text-5xl">
-                {post.title}
+                {displayTitle(post.title)}
               </h1>
 
               <p className="mt-5 max-w-4xl text-lg leading-relaxed text-[#B7B0AA]">
@@ -266,11 +268,11 @@ export default async function BlogPostPage({
               </div>
             </Link>
 
-            {post.cover_url ? (
+            {image ? (
               <div className="relative mb-10 aspect-[16/8] overflow-hidden rounded-3xl border border-border">
                 <Image
-                  src={post.cover_url}
-                  alt={post.title}
+                  src={image}
+                  alt={displayTitle(post.title)}
                   fill
                   className="object-cover"
                   priority
@@ -278,16 +280,6 @@ export default async function BlogPostPage({
               </div>
             ) : null}
 
-            <section className="mb-8 rounded-2xl border border-border bg-bg-2 p-5">
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">
-                Key takeaways
-              </h2>
-              <ul className="space-y-2 text-sm leading-relaxed text-[#D7D0CA]">
-                <li>Use this guide as educational information, not personal financial advice.</li>
-                <li>Compare options carefully before making money decisions.</li>
-                <li>Focus on practical actions that match your income, goals, and risk level.</li>
-              </ul>
-            </section>
 
             <div
               className="prose-cashclimb max-w-none overflow-hidden break-words"
@@ -362,7 +354,7 @@ export default async function BlogPostPage({
                           {item.category}
                         </p>
                         <h3 className="break-words font-bold leading-snug text-[#F0EDE8]">
-                          {item.title}
+                          {displayTitle(item.title)}
                         </h3>
                         <p className="mt-3 line-clamp-3 text-sm text-[#9A9490]">
                           {item.excerpt}

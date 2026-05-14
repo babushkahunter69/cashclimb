@@ -1,5 +1,6 @@
 import type { Category, WorkflowCheck } from '@/types'
 import { resolvePostAuthorName } from '@/lib/authors'
+import { cleanSeoTitle } from '@/lib/seo/clean-title'
 
 type EditablePost = {
   id: string
@@ -217,8 +218,8 @@ function softenFlaggedLanguage(html: string) {
 function strengthenMetadata(post: EditablePost, contentHtml: string, titleOverride?: string) {
   const baseTitle = ensureKeywordInTitle(titleOverride || post.title || post.primary_keyword || 'Finance guide', post.primary_keyword)
   const seoTitle = post.seo_title?.trim()
-    ? trimToLength(ensureKeywordInTitle(post.seo_title.trim(), post.primary_keyword), 65)
-    : trimToLength(baseTitle.length < 40 ? `${baseTitle} | CashClimb Guide` : baseTitle, 65)
+    ? trimToLength(cleanSeoTitle(ensureKeywordInTitle(post.seo_title.trim(), post.primary_keyword)), 65)
+    : trimToLength(cleanSeoTitle(baseTitle), 65)
 
   let excerpt = post.excerpt?.trim() || ''
   if (!excerpt) {

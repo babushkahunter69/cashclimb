@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase-server'
 import { evaluateFinanceArticle, nextStatusFromEvaluation } from '@/lib/editorial-workflow'
 import type { Category, WorkflowEvaluation } from '@/types'
+import { cleanSeoTitle } from '@/lib/seo/clean-title'
 
 const CATEGORY_VALUES: Category[] = ['Investing', 'Personal Finance', 'Credit', 'Taxes', 'Real Estate', 'Retirement']
 const YMYL_CATEGORIES = new Set(['Investing', 'Retirement', 'Taxes', 'Real Estate'])
@@ -264,7 +265,7 @@ export async function fixPostContentDepthAndTone(postId: string): Promise<FixRes
 
   const title = post.title || `${titleCase(keyword)}: Step-by-Step Guide`
   const excerpt = post.excerpt || `Learn ${keyword} with practical examples, common mistakes, safer next steps, and a clear checklist for everyday financial decisions.`
-  const seoTitle = trimSeoTitle(post.seo_title || title, keyword)
+  const seoTitle = trimSeoTitle(cleanSeoTitle(post.seo_title || title), keyword)
   const seoDescription = trimSeoDescription(post.seo_description || excerpt, keyword)
 
   const after = evaluateFinanceArticle({
