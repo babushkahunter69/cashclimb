@@ -34,7 +34,7 @@ export default async function WorkflowPage() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <SectionCard title="Queued Keywords" subtitle="Topics ready for generation" count={queueRes.count ?? 0} href="/admin/keywords" tone="text-gold" />
-        <SectionCard title="Needs Review" subtitle="Drafts blocked for editorial review" count={reviewRes.count ?? 0} href="/admin/posts" tone="text-yellow-400" />
+        <SectionCard title="Needs Review" subtitle="Drafts blocked for editorial review" count={reviewRes.count ?? 0} href="/admin/posts" tone="text-yellow-400 underline underline-offset-4 hover:text-yellow-300" />
         <SectionCard title="Approved" subtitle="Ready to publish" count={approvedRes.count ?? 0} href="/admin/posts" tone="text-sky-400" />
         <SectionCard title="Published" subtitle="Live articles" count={publishedRes.count ?? 0} href="/admin/posts" tone="text-emerald-400" />
       </div>
