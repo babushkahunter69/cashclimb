@@ -31,6 +31,37 @@ const KNOWN_URL_REPLACEMENTS: Record<string, string> = {
 }
 
 const SOURCE_FALLBACKS: SourceFallback[] = [
+
+  {
+    name: 'IRS required minimum distributions',
+    url: 'https://www.irs.gov/retirement-plans/retirement-plan-and-ira-required-minimum-distributions-faqs',
+    matchText: /irs[^<\n]*(required minimum distributions?|rmds?|retirement plan rules|withdrawals?)/i,
+    matchUrl: /irs\.gov\/retirement-plans\/.*required-minimum-distributions/i,
+  },
+  {
+    name: 'IRS retirement plans',
+    url: 'https://www.irs.gov/retirement-plans',
+    matchText: /irs[^<\n]*(retirement|ira|401\(k\)|withdrawal|contribution)/i,
+    matchUrl: /irs\.gov\/retirement-plans/i,
+  },
+  {
+    name: 'GOV.UK pension income',
+    url: 'https://www.gov.uk/tax-on-pension',
+    matchText: /gov\.uk[^<\n]*(pension income|pension|tax and how to take it)/i,
+    matchUrl: /gov\.uk\/tax-on-pension/i,
+  },
+  {
+    name: 'GOV.UK tax',
+    url: 'https://www.gov.uk/browse/tax',
+    matchText: /gov\.uk[^<\n]*(tax|hmrc)/i,
+    matchUrl: /gov\.uk\/browse\/tax/i,
+  },
+  {
+    name: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/',
+    matchText: /consumer financial protection bureau[^<\n]*(budget|secured credit|credit cards?|mortgage|consumer)/i,
+    matchUrl: /consumerfinance\.gov/i,
+  },
   {
     name: 'CFPB bankruptcy and credit reports',
     url: 'https://www.consumerfinance.gov/ask-cfpb/how-long-does-a-bankruptcy-appear-on-credit-reports-en-325/',
@@ -163,10 +194,12 @@ export function normalizeHref(href: string) {
 }
 
 export function normalizeLinksInHtml(html: string) {
-  return String(html || '').replace(
+  const normalized = String(html || '').replace(
     /href=(['"])(.*?)\1/gi,
     (_match, quote, href) => `href=${quote}${normalizeHref(safeDecode(href))}${quote}`
   )
+
+  return relinkPlainSourceText(normalized)
 }
 
 async function getExternalUrlStatus(url: string): Promise<LinkStatus> {
@@ -199,10 +232,20 @@ async function getExternalUrlStatus(url: string): Promise<LinkStatus> {
 
 function relinkPlainSourceText(html: string) {
   let output = html
+  const sourceNamePattern = '(?:CFPB|Consumer Financial Protection Bureau|FCA|Financial Conduct Authority|IRS|GOV\\.UK|GOV UK|MoneyHelper|Investor\\.gov|SEC)'
 
   for (const fallback of SOURCE_FALLBACKS) {
     output = output.replace(
-      /(<li[^>]*>\s*)([^<]*?(?:CFPB|FCA|IRS|MoneyHelper)[^<]*?)(\s*<\/li>)/gi,
+      new RegExp(`(<li[^>]*>\\s*)([^<]*?${sourceNamePattern}[^<]*?)(\\s*<\\/li>)`, 'gi'),
+      (match, before, label, after) => {
+        if (/<a\b/i.test(match)) return match
+        if (!fallback.matchText.test(label)) return match
+        return `${before}<a href="${fallback.url}" target="_blank" rel="noopener noreferrer">${label.trim()}</a>${after}`
+      }
+    )
+
+    output = output.replace(
+      new RegExp(`(<p[^>]*>\\s*)([^<]*?${sourceNamePattern}[^<]*?)(\\s*<\\/p>)`, 'gi'),
       (match, before, label, after) => {
         if (/<a\b/i.test(match)) return match
         if (!fallback.matchText.test(label)) return match
@@ -212,6 +255,26 @@ function relinkPlainSourceText(html: string) {
   }
 
   return output
+}
+
+function enforceLinkedSources(html: string) {
+  const sourceSection = html.match(/<h2[^>]*>\s*Sources\s*<\/h2>([\s\S]*?)(?=<h2\b|$)/i)
+  if (!sourceSection) return html
+
+  const invalidLine = sourceSection[1]
+    .split(/<\/p>|<\/li>|\n/i)
+    .map((line) => stripTags(line).trim())
+    .find((line) => {
+      if (!line) return false
+      const looksLikeSource = SOURCE_FALLBACKS.some((fallback) => fallback.matchText.test(line))
+      return looksLikeSource && !new RegExp(`<a\\b[^>]*>${escapeRegExp(line)}<\\/a>`, 'i').test(sourceSection[1])
+    })
+
+  if (invalidLine) {
+    throw new Error(`Sources section contains an unlinked source: ${invalidLine}`)
+  }
+
+  return html
 }
 
 export async function normalizeAndValidateLinksInHtml(
@@ -270,6 +333,8 @@ export async function normalizeAndValidateLinksInHtml(
   if (opts.rehydratePlainSources) {
     output = relinkPlainSourceText(output)
   }
+
+  enforceLinkedSources(output)
 
   return output
 }

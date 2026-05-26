@@ -882,7 +882,7 @@ The contentHtml field MUST follow this exact order:
 9. <h2>FAQ</h2>
    - Include 4 to 6 questions using <h3>Question</h3><p>Answer</p>.
 10. <h2>Sources</h2>
-   - Include at least 2 authoritative external links.
+   - Include at least 2 authoritative external links as clickable <a href="https://..." target="_blank" rel="noopener noreferrer">Source name</a> items. Never output plain-text source names in Sources.
 11. Short conclusion paragraph.
 
 STRICT SECTION REQUIREMENTS:
@@ -907,7 +907,7 @@ SEO AND AI-CITATION RULES:
 - Make definitions and decision rules easy for AI systems to extract.
 - Use specific examples, tradeoffs, and conditions instead of vague advice.
 - Include 2 to 4 natural internal links using <a href="/blog/...">...</a>.
-- Include 2 authoritative external links using <a href="URL" target="_blank" rel="noopener noreferrer">Label</a>.
+- Include 2 authoritative external links using <a href="https://..." target="_blank" rel="noopener noreferrer">Label</a>. Every item under <h2>Sources</h2> must be a clickable external link, never plain text.
 
 FINANCE SAFETY RULES:
 - Do not provide personalized financial, tax, investment, mortgage, legal, or retirement advice.
@@ -1007,7 +1007,7 @@ Humanization goals:
 - Make the tone feel like a thoughtful finance editor, not a template.
 - Preserve practical examples and decision-making guidance.
 - Preserve or improve 2 to 4 natural internal links using <a href="/blog/...">...</a>.
-- Keep authority links and disclaimers.
+- Keep authority links and disclaimers. Every item under <h2>Sources</h2> must remain a clickable external <a> link with a full https URL.
 - Do not introduce new unverifiable facts or statistics.
 - Do not make personalized financial, tax, or legal recommendations.
 
@@ -1024,6 +1024,7 @@ You MUST keep these sections in contentHtml exactly as <h2> headings:
 Do not remove, rename, merge, or skip those sections.
 Do not create duplicate Key Takeaways sections.
 Do not move Sources into another section.
+Every item under <h2>Sources</h2> must be a clickable external <a> link with a full https URL.
 Do not use markdown. Return valid HTML only in contentHtml.
 
 Current draft to refine:
