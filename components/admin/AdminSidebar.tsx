@@ -11,6 +11,7 @@ const NAV = [
   { href: '/admin/keywords', label: 'Keywords', icon: '🔎' },
   { href: '/admin/automation', label: 'Automation', icon: '⚙️' },
   { href: '/admin/comments', label: 'Comments', icon: '💬'},
+  { href: '/admin/newsletter', label: 'Newsletter', icon: '✉️' },
   { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
 ]
 

@@ -10,6 +10,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { displayTitle } from '@/lib/seo/clean-title'
 import { localizeCoverUrl } from '@/lib/images'
+import NewsletterSignup from '@/components/NewsletterSignup'
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://cashclimb.org').replace(/\/$/, '')
 const socialImage = '/opengraph-image'
@@ -60,14 +61,21 @@ function formatDate(date: string) {
 export default async function HomePage() {
   const supabase = createAdminClient()
 
-  const { data: posts } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('published', true)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const [{ data: posts }, { data: statRows, count: guideCount }] = await Promise.all([
+    supabase
+      .from('posts')
+      .select('*')
+      .eq('published', true)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('posts')
+      .select('view_count', { count: 'exact' })
+      .eq('published', true),
+  ])
 
   const allPosts: Post[] = posts ?? []
+  const totalReads = (statRows ?? []).reduce((sum: number, row: any) => sum + Number(row.view_count || 0), 0)
   const [heroPost, ...rest] = allPosts
 
   const heroAuthor = heroPost
@@ -104,10 +112,14 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#9A9490] sm:mt-8">
-              {['No sponsored rankings', 'No ads or paywalls', 'Reviewed for clarity'].map((item) => (
-                <span key={item} className="inline-flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+            <div className="mt-6 grid max-w-2xl grid-cols-1 gap-3 text-sm text-[#B7B0AA] sm:mt-8 sm:grid-cols-3">
+              {[
+                guideCount ? `${guideCount} published guides` : 'Published guides',
+                totalReads ? `${totalReads.toLocaleString('en-US')} recorded article reads` : 'Reader-focused articles',
+                'No sponsored rankings',
+              ].map((item) => (
+                <span key={item} className="rounded-2xl border border-border bg-bg-2/70 px-4 py-3">
+                  <span className="mb-2 block h-1.5 w-1.5 rounded-full bg-gold" />
                   {item}
                 </span>
               ))}
@@ -190,6 +202,11 @@ export default async function HomePage() {
             ))}
           </div>
         </div>
+      </section>
+
+
+      <section className="mx-auto max-w-7xl px-6 py-14">
+        <NewsletterSignup source="homepage" />
       </section>
 
       {rest.length > 0 && (

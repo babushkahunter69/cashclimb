@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import NewsletterSignup from '@/components/NewsletterSignup'
 import { createAdminClient } from '@/lib/supabase-server'
 import { getAuthorByName, resolvePostAuthorName } from '@/lib/authors'
 import { getAutoAuthor } from '@/lib/seo-authors'
@@ -285,6 +286,14 @@ export default async function BlogPostPage({
               className="prose-cashclimb max-w-none overflow-hidden break-words"
               dangerouslySetInnerHTML={{ __html: cleanBody }}
             />
+
+            <div className="mt-10">
+              <NewsletterSignup
+                source="article-after-content"
+                title="Keep learning without searching from scratch"
+                description="Get practical CashClimb guides and tools in your inbox when new articles are published. No sponsored rankings or paywalls."
+              />
+            </div>
 
             <section className="mt-10 rounded-2xl border border-border bg-bg-2 p-5">
               <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-gold">

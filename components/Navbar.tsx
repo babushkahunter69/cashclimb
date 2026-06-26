@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import NewsletterSignup from '@/components/NewsletterSignup'
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -12,16 +13,16 @@ export default function Navbar() {
     { href: '/', label: 'Home' },
     { href: '/blog', label: 'Articles' },
     { href: '/about', label: 'About' },
-    { href: '/editorial-standards', label: 'Standards' },
+    { href: '/authors', label: 'Authors' },
     { href: '/tools', label: 'Tools' },
   ]
 
   return (
-    <nav className="sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-border">
-      <div className="max-w-7xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 group" onClick={() => setOpen(false)}>
+    <nav className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5 sm:px-6">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5 group" onClick={() => setOpen(false)}>
           <div
-            className="w-8 h-8 bg-gold flex items-center justify-center text-bg font-black text-sm"
+            className="flex h-8 w-8 items-center justify-center bg-gold text-sm font-black text-bg"
             style={{ clipPath: 'polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)' }}
           >
             C
@@ -31,12 +32,12 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden min-w-0 flex-1 items-center justify-end gap-5 md:flex">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium tracking-wide transition-colors ${
+              className={`whitespace-nowrap text-sm font-medium tracking-wide transition-colors ${
                 pathname === link.href ? 'text-gold' : 'text-[#9A9490] hover:text-gold'
               }`}
             >
@@ -44,17 +45,11 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <Link
-            href="/admin/login?from=%2Fadmin"
-            className="text-xs font-bold tracking-widest uppercase border border-border px-4 py-2 rounded text-[#9A9490] hover:text-gold hover:border-gold transition-all"
-          >
-            Editor Login
-          </Link>
-
+          <NewsletterSignup variant="nav" source="header" cta="Join" />
         </div>
 
         <button
-          className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg border border-border text-[#F0EDE8] text-2xl leading-none"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-2xl leading-none text-[#F0EDE8] md:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
@@ -65,7 +60,7 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <div className="md:hidden bg-bg-2 border-b border-border px-5 py-4">
+        <div className="border-b border-border bg-bg-2 px-5 py-4 md:hidden">
           <div className="grid gap-2">
             {links.map((link) => (
               <Link
@@ -80,14 +75,15 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <Link
-              href="/admin/login?from=%2Fadmin"
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-3 text-sm font-medium text-[#C8C0B9] hover:bg-bg-3 hover:text-gold transition-colors"
-            >
-              Editor Login
-            </Link>
-
+            <div className="mt-3">
+              <NewsletterSignup
+                variant="inline"
+                source="mobile-header"
+                title="Get new CashClimb guides"
+                description="Useful money guides by email, without sponsored rankings."
+                cta="Join free"
+              />
+            </div>
           </div>
         </div>
       )}
