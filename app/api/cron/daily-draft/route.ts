@@ -872,23 +872,28 @@ The contentHtml field MUST follow this exact order:
    - One concise paragraph that directly answers the main query.
 4. <h2>Key Takeaways</h2>
    - A <ul> with 3 to 5 specific, useful bullets.
-5. 4 to 7 practical body sections using <h2> and optional <h3> headings.
-6. <h2>Real Examples</h2>
+5. <h2>Decision Checklist</h2>
+   - A <ul> or <ol> that turns the answer into concrete checks.
+6. <h2>Risk and Tradeoffs</h2>
+   - Explain what could go wrong, who the idea may not fit, and what to verify first.
+7. 3 to 5 practical body sections using <h2> and optional <h3> headings.
+8. <h2>Real Examples</h2>
    - Include at least 2 realistic examples with numbers where useful.
-7. <h2>Common Mistakes to Avoid</h2>
+9. <h2>Common Mistakes to Avoid</h2>
    - Use a <ul> with practical mistakes.
-8. <h2>What You Can Do Next</h2>
+10. <h2>What You Can Do Next</h2>
    - Use an <ol> with clear next steps.
-9. <h2>FAQ</h2>
+11. <h2>FAQ</h2>
    - Include 4 to 6 questions using <h3>Question</h3><p>Answer</p>.
-10. <h2>Sources</h2>
+12. <h2>Sources</h2>
    - Include at least 2 authoritative external links as clickable <a href="https://..." target="_blank" rel="noopener noreferrer">Source name</a> items. Never output plain-text source names in Sources.
-11. Short conclusion paragraph.
+13. Short conclusion paragraph.
 
 STRICT SECTION REQUIREMENTS:
 - You MUST include an exact <h2>Quick Answer</h2> section.
 - You MUST include an exact <h2>FAQ</h2> section.
 - You MUST include an exact <h2>Sources</h2> section.
+- You MUST include exact <h2>Decision Checklist</h2> and <h2>Risk and Tradeoffs</h2> sections.
 - Do not hide sources inside another section.
 - Do not skip FAQ.
 - Do not skip Quick Answer.
@@ -904,7 +909,7 @@ HTML RULES:
 SEO AND AI-CITATION RULES:
 - Write in a way that answers the query quickly and clearly.
 - Use the primary keyword naturally in the intro, Quick Answer, and at least one H2.
-- Make definitions and decision rules easy for AI systems to extract.
+- Make definitions, eligibility limits, decision rules, risk conditions, and source-backed caveats easy for AI systems to extract.
 - Use specific examples, tradeoffs, and conditions instead of vague advice.
 - Include 2 to 4 natural internal links using <a href="/blog/...">...</a>.
 - Include 2 authoritative external links using <a href="https://..." target="_blank" rel="noopener noreferrer">Label</a>. Every item under <h2>Sources</h2> must be a clickable external link, never plain text.
@@ -1015,6 +1020,8 @@ MANDATORY PRESERVATION RULES:
 You MUST keep these sections in contentHtml exactly as <h2> headings:
 - <h2>Quick Answer</h2>
 - <h2>Key Takeaways</h2>
+- <h2>Decision Checklist</h2>
+- <h2>Risk and Tradeoffs</h2>
 - <h2>Real Examples</h2>
 - <h2>Common Mistakes to Avoid</h2>
 - <h2>What You Can Do Next</h2>
@@ -1087,6 +1094,18 @@ function ensureArticleRequiredSections(article: GeneratedArticle, outline: Artic
       /<h2[^>]*>\s*Key Takeaways\s*<\/h2>/i,
       `<h2>Quick Answer</h2>\n<p>${outline.primaryKeyword} depends on your goals, timeline, income, and risk level. The best choice is usually the one that solves the immediate financial problem without creating unnecessary cost, risk, or complexity.</p>\n<h2>Key Takeaways</h2>`
     )
+  }
+
+  if (!hasH2Section(contentHtml, 'Decision Checklist')) {
+    contentHtml += `
+<h2>Decision Checklist</h2>
+<ul><li>Check the total cost, not just the headline number.</li><li>Confirm whether taxes, fees, interest, penalties, or account rules apply.</li><li>Compare at least one lower-risk alternative before acting.</li><li>Decide what would make you wait, pause, or ask for qualified help.</li></ul>`
+  }
+
+  if (!hasH2Section(contentHtml, 'Risk and Tradeoffs')) {
+    contentHtml += `
+<h2>Risk and Tradeoffs</h2>
+<p>The main risk is acting on a general rule without checking your own numbers. Fees, taxes, interest rates, time horizon, income stability, and liquidity needs can change whether a strategy is reasonable.</p>`
   }
 
   if (!hasH2Section(contentHtml, 'Real Examples')) {

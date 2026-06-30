@@ -223,6 +223,40 @@ function ensureDisclaimer(html: any, category: Category) {
   )}\n${safeHtml}`
 }
 
+
+function ensureQuickAnswer(html: any, keyword: string) {
+  const safeHtml = safeString(html)
+  if (/<h2[^>]*>\s*Quick Answer\s*<\/h2>/i.test(safeHtml)) return safeHtml
+  return `${safeHtml}
+<h2>Quick Answer</h2>
+${p(
+    `${titleCase(keyword)} is best treated as a financial decision, not a universal rule. Compare the cost, timing, risk, flexibility, and current rules before taking action.`
+  )}`
+}
+
+function ensureDecisionChecklist(html: any) {
+  const safeHtml = safeString(html)
+  if (/<h2[^>]*>\s*Decision Checklist\s*<\/h2>/i.test(safeHtml)) return safeHtml
+  return `${safeHtml}
+<h2>Decision Checklist</h2>
+${list([
+    'Check the total cost, not just the headline number.',
+    'Confirm fees, taxes, interest, penalties, deadlines, and account rules.',
+    'Compare one safer alternative before making a large or irreversible move.',
+    'Consider qualified help when the decision affects taxes, investments, legal documents, property, retirement accounts, or large debts.',
+  ])}`
+}
+
+function ensureRiskTradeoffs(html: any) {
+  const safeHtml = safeString(html)
+  if (/<h2[^>]*>\s*Risk and Tradeoffs\s*<\/h2>/i.test(safeHtml)) return safeHtml
+  return `${safeHtml}
+<h2>Risk and Tradeoffs</h2>
+${p(
+    'The main risk is applying general finance guidance without checking your own numbers. Income stability, debt level, time horizon, liquidity needs, tax treatment, and account rules can change the right next step.'
+  )}`
+}
+
 function ensureKeyTakeaways(html: any, keyword: string) {
   const safeHtml = safeString(html)
 
@@ -507,7 +541,10 @@ export async function fixPostSeoIssues(postId: string): Promise<FixResult> {
   body = removeBadLanguage(body)
   body = ensureOpeningKeyword(body, keyword)
   body = ensureDisclaimer(body, category)
+  body = ensureQuickAnswer(body, keyword)
   body = ensureKeyTakeaways(body, keyword)
+  body = ensureDecisionChecklist(body)
+  body = ensureRiskTradeoffs(body)
   body = ensureH2Structure(body, keyword)
   body = ensureExamples(body, keyword)
   body = ensureDepth(body, keyword, category)

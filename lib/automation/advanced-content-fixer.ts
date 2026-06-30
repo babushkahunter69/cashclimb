@@ -148,17 +148,34 @@ function officialSourceParagraph(category: Category) {
 function buildUsefulDepthSections(html: string, keyword: string, category: Category) {
   let out = html
 
+  out = appendSection(out, 'Quick Answer', [
+    p(`${titleCase(keyword)} should be handled as a specific financial decision. Compare cost, timing, risk, flexibility, and current rules before taking action.`),
+  ].join('\n'))
+
+  out = appendSection(out, 'Decision Checklist', [
+    list([
+      'Check the total cost, not just the headline number.',
+      'Confirm fees, taxes, interest, penalties, deadlines, and account rules.',
+      'Compare one safer alternative before making a large or irreversible move.',
+      'Consider qualified help when the decision affects taxes, investments, legal documents, property, retirement accounts, or large debts.',
+    ]),
+  ].join('\n'))
+
+  out = appendSection(out, 'Risk and Tradeoffs', [
+    p('The main risk is applying general finance guidance without checking your own numbers. Income stability, debt level, time horizon, liquidity needs, tax treatment, and account rules can change the right next step.'),
+  ].join('\n'))
+
   out = appendSection(out, 'How to make the decision practical', [
     p('Start by turning the topic into a real decision. Write down the action being considered, the amount of money involved, the timing, and what could go wrong if income, rates, fees, or account rules change.'),
     p('A useful article should explain the tradeoff instead of adding broad advice. Readers need to know what helps, what can backfire, and what number to check before acting.'),
   ].join('\n'))
 
-  out = appendSection(out, 'Example', [
+  out = appendSection(out, 'Real Examples', [
     p(`For example, a reader comparing options related to ${keyword} might see one choice that looks easier today and another that is slower but safer. The better choice depends on cash flow, fees, timing, flexibility, and whether the decision creates risk later.`),
     p('That comparison is more helpful than a generic rule because it shows how the decision changes when the reader has irregular income, high-interest debt, a thin emergency fund, or a short deadline.'),
   ].join('\n'))
 
-  out = appendSection(out, 'Common mistakes to avoid', [
+  out = appendSection(out, 'Common Mistakes to Avoid', [
     list([
       'Comparing only one number, such as a monthly payment, rate, or projected return.',
       'Ignoring fees, tax treatment, deadlines, account rules, or penalties.',
@@ -168,7 +185,7 @@ function buildUsefulDepthSections(html: string, keyword: string, category: Categ
     ]),
   ].join('\n'))
 
-  out = appendSection(out, 'Before you act', [
+  out = appendSection(out, 'What You Can Do Next', [
     p('Check the current numbers, read the account terms, and compare at least one safer alternative. If the decision affects taxes, investing, retirement accounts, property, legal documents, or large debts, consider getting qualified help.'),
     officialSourceParagraph(category),
   ].join('\n'))

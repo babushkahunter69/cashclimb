@@ -175,7 +175,7 @@ export function buildBrief(keyword: string, category: Category, intent = 'inform
     audience: input?.audience || 'Beginners',
     market: input?.market || 'US-focused with general Western audience framing',
     riskTolerance: input?.riskTolerance || 'Low',
-    requiredSections: ['Key Takeaways', 'Why it matters', 'How it works', 'Example', 'Common mistakes', 'FAQ', 'Bottom line'],
+    requiredSections: ['Quick Answer', 'Key Takeaways', 'Decision Checklist', 'Risk and Tradeoffs', 'Real Examples', 'Common Mistakes to Avoid', 'What You Can Do Next', 'FAQ', 'Sources'],
     citationTargets: OFFICIAL_LINKS[category].map((source) => source.title),
     internalLinkPlan: ['Add only contextual CashClimb links that directly help the reader.'],
     safetyRules: [
@@ -264,6 +264,8 @@ export function buildArticleDraft(input: DraftInput) {
   const html = [
     disclaimer,
     paragraph(`${sentenceCase(topic)} matters because small details can change the real cost or risk. This guide focuses on ${frame.focus}, so you can compare the choice without turning it into a generic money rule.`),
+    '<h2>Quick Answer</h2>',
+    paragraph(`${sentenceCase(topic)} is a financial decision that should be checked against your income, timeline, fees, taxes, risk tolerance, and ability to reverse the choice if conditions change.`),
     '<h2>Key Takeaways</h2>',
     list([
       `Start by checking ${frame.check}.`,
@@ -281,10 +283,19 @@ export function buildArticleDraft(input: DraftInput) {
       'Look for fees, deadlines, account rules, taxes, and penalties.',
       'Choose the smallest useful step before making bigger changes.',
     ]),
-    '<h2>Example</h2>',
+    '<h2>Decision Checklist</h2>',
+    list([
+      `Confirm ${frame.check}.`,
+      'Compare the total cost, not just the headline number.',
+      'Check whether the decision affects taxes, credit, liquidity, or long-term flexibility.',
+      'Decide what would make you pause, wait, or choose a safer option.',
+    ]),
+    '<h2>Risk and Tradeoffs</h2>',
+    paragraph(`The main tradeoff is ${frame.risk}. A decision can look helpful in the short term but still be expensive if it adds fees, reduces flexibility, or depends on an outcome that is not guaranteed.`),
+    '<h2>Real Examples</h2>',
     paragraph(`For example, two choices around ${topic} may look similar at first. One may have a lower monthly cost, while the other may be safer because it keeps more cash available or avoids a fee later.`),
     paragraph('That is why the answer depends on the details. A small fee, a deadline, or a rule about access can matter more than the headline benefit.'),
-    '<h2>Common mistakes to avoid</h2>',
+    '<h2>Common Mistakes to Avoid</h2>',
     list([
       'Comparing only one headline number.',
       'Ignoring timing, fees, taxes, penalties, or account rules.',
@@ -292,11 +303,11 @@ export function buildArticleDraft(input: DraftInput) {
       'Making the first step too large to maintain.',
       'Using old information when current rules matter.',
     ]),
-    '<h2>What to verify</h2>',
+    '<h2>Sources</h2>',
     officialSource(category),
     '<h2>FAQ</h2>',
     ...faqs.flatMap(([q, a]) => [`<h3>${q}</h3>`, paragraph(a)]),
-    '<h2>Bottom line</h2>',
+    '<h2>What You Can Do Next</h2>',
     paragraph(`Treat ${topic} as a specific finance decision, not a slogan. Gather the numbers, compare the tradeoffs, verify current rules, and take the smallest useful next step.`),
   ].filter(Boolean).join('\n')
 

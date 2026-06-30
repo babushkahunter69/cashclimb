@@ -35,6 +35,44 @@ function stripHtml(value?: string | null) {
   return String(value || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+function extractFaqsFromHtml(html: string) {
+  const faqs: Array<{ question: string; answer: string }> = []
+  const faqMatch = html.match(/<h2[^>]*>\s*(FAQ|Frequently Asked Questions)\s*<\/h2>([\s\S]*?)(?=<h2|$)/i)
+  if (!faqMatch) return faqs
+
+  const section = faqMatch[2] || ''
+  const pattern = /<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/gi
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(section)) && faqs.length < 8) {
+    const question = stripHtml(match[1])
+    const answer = stripHtml(match[2])
+    if (question && answer) faqs.push({ question, answer })
+  }
+
+  return faqs
+}
+
+function inferFinanceTopics(post: Post, plainBody: string) {
+  const text = `${post.title} ${post.category} ${plainBody}`.toLowerCase()
+  const topics = new Set<string>(['personal finance', String(post.category || '').toLowerCase()].filter(Boolean))
+
+  const checks: Array<[RegExp, string]> = [
+    [/credit|fico|utilization|debt|loan|apr|balance transfer/, 'credit and debt management'],
+    [/invest|stock|etf|index fund|brokerage|portfolio|dividend|risk tolerance/, 'investing education'],
+    [/retirement|401k|ira|pension|social security|superannuation/, 'retirement planning education'],
+    [/tax|deduction|refund|irs|withholding|filing|freelancer/, 'tax education'],
+    [/mortgage|homebuy|real estate|rent vs buy|closing cost|down payment/, 'home buying education'],
+    [/budget|saving|emergency fund|cash flow|sinking fund|paycheck/, 'budgeting and saving'],
+  ]
+
+  for (const [pattern, topic] of checks) {
+    if (pattern.test(text)) topics.add(topic)
+  }
+
+  return Array.from(topics).slice(0, 8)
+}
+
 async function getPost(slug: string) {
   const supabase = createAdminClient()
 
@@ -119,6 +157,20 @@ export default async function BlogPostPage({
   const cleanBody = normalizeLinksInHtml(post.body || '')
   const plainBody = stripHtml(cleanBody)
   const updatedDate = post.updated_at || post.created_at
+  const contentFaqs = extractFaqsFromHtml(cleanBody)
+  const faqEntities = contentFaqs.length > 0
+    ? contentFaqs
+    : [
+        {
+          question: `Is ${displayTitle(post.title)} financial advice?`,
+          answer: 'No. CashClimb content is for informational and educational purposes only and should not be treated as personal financial advice.',
+        },
+        {
+          question: 'When should I speak with a qualified professional?',
+          answer: 'Consider qualified help when a decision involves taxes, investing, retirement accounts, property, legal documents, or large debt balances.',
+        },
+      ]
+  const financeTopics = inferFinanceTopics(post, plainBody)
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -131,6 +183,33 @@ export default async function BlogPostPage({
         logo: {
           '@type': 'ImageObject',
           url: `${siteUrl}/opengraph-image`,
+        },
+        sameAs: [],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${siteUrl}/#website`,
+        name: 'CashClimb',
+        url: siteUrl,
+        publisher: { '@id': `${siteUrl}/#organization` },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${siteUrl}/blog?search={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${articleUrl}#webpage`,
+        url: articleUrl,
+        name: displayTitle(post.title),
+        description: post.excerpt,
+        isPartOf: { '@id': `${siteUrl}/#website` },
+        about: financeTopics.map((topic) => ({ '@type': 'Thing', name: topic })),
+        reviewedBy: {
+          '@type': 'Person',
+          name: fallbackAuthor.reviewerName,
+          jobTitle: fallbackAuthor.reviewerRole,
         },
       },
       {
@@ -169,7 +248,7 @@ export default async function BlogPostPage({
       {
         '@type': 'Article',
         '@id': `${articleUrl}#article`,
-        mainEntityOfPage: articleUrl,
+        mainEntityOfPage: { '@id': `${articleUrl}#webpage` },
         headline: displayTitle(post.title),
         description: post.excerpt,
         image,
@@ -177,6 +256,12 @@ export default async function BlogPostPage({
         wordCount: plainBody ? plainBody.split(/\s+/).length : undefined,
         datePublished: post.created_at,
         dateModified: updatedDate,
+        about: financeTopics.map((topic) => ({ '@type': 'Thing', name: topic })),
+        educationalUse: 'Financial education',
+        audience: {
+          '@type': 'Audience',
+          audienceType: 'Adults learning about personal finance',
+        },
         author: {
           '@id': `${siteUrl}/authors/${author.slug}#author`,
         },
@@ -187,24 +272,14 @@ export default async function BlogPostPage({
       {
         '@type': 'FAQPage',
         '@id': `${articleUrl}#faq`,
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: `Is ${displayTitle(post.title)} financial advice?`,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'No. CashClimb content is for informational and educational purposes only and should not be treated as personal financial advice.',
-            },
+        mainEntity: faqEntities.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer,
           },
-          {
-            '@type': 'Question',
-            name: 'Who reviews CashClimb content?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'CashClimb articles are reviewed for clarity, usefulness, and responsible financial education.',
-            },
-          },
-        ],
+        })),
       },
     ],
   }
